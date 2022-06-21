@@ -6,12 +6,15 @@ import (
  cobra "github.com/spf13/cobra"
 )
 
+var version = "0.0.1"
+
 var rootCmd = &cobra.Command{
     Use:  "basin-node",
+    Version: version,
     Short: "basin-node - a CLI for interacting with your Basin Node.",
     Long: `basin-node is a CLI that lets you do everything possible with a Basin Node.
    
-One can use basin-node to manage producer, consumer, & user functionality`,
+One can use basin-node to manage producer, consumer, & user functionality.`,
     Run: func(cmd *cobra.Command, args []string) {
 
     },
