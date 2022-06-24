@@ -1,6 +1,11 @@
 package main
 
 import (
+	cmd "basin-node/cmd"
+)
+
+/*
+import (
 	"context"
 	"encoding/json"
 	"flag"
@@ -13,6 +18,7 @@ import (
 	// kademlia "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/examples/pubsub/chat/cmd"
 	mdns "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
@@ -175,7 +181,7 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 		sendMessage(ctx, topic, "Test Message at "+time.String(), selfID)
 	}
 }
-
+*/
 // package main
 
 // func main() {
@@ -189,3 +195,7 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 // 		println(msg)
 // 	}
 // }
+
+func main() {
+	cmd.Execute()
+}
