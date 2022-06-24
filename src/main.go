@@ -18,7 +18,6 @@ import (
 	// kademlia "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/examples/pubsub/chat/cmd"
 	mdns "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
