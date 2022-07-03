@@ -9,7 +9,7 @@
         "type": "string"
       }
     },
-    "permissions": {
+    "capabilities": {
       "type": "array",
       "items": {
         "$ref": "./capability.json"

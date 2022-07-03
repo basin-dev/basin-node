@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "user": {
+      "type": "string"
+    },
+    "scheme": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    }
+  }
+}
