@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string"
+    },
+    "sourceDid": {
+      "type": "string"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "schema": {
+      "type": "object" // Is there a $ref url for a JSON Schema specification of itself?
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "transformerRepo": {
+      "type": "string"
+    },
+    "homepage": {
+      "type": "string"
+    },
+    "guaranteeType": {
+      "type": "string",
+      "oneOf": ["none", "anchored", "byzantine", "consensus"]
+    },
+    "defaultRoyalties": {
+      "$ref": "./royalties.schema.json"
+    }
+  },
+  "required": ["url", "sourceDid", "schema", "name", "version"]
+}

@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/atombender/go-jsonschema v0.9.0 // indirect
+	github.com/aymerick/raymond v2.0.2+incompatible // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.22.1 // indirect

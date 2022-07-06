@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -12,7 +13,7 @@ import (
 // - Notification of subscribers
 // - Update to freshness record
 func logFreshData(urls []string) {
-
+	return true
 }
 
 type ErrorHandleAction int64
@@ -33,6 +34,7 @@ func handleErr(err error, action ErrorHandleAction) {
 	}
 }
 
+// TODO
 func parseUrl(url string) UrlJson {
 
 	urlJson := new(UrlJson)
@@ -58,9 +60,8 @@ func contains(slice []interface{}, val interface{}) bool {
 	return false
 }
 
-func expired(date string) bool {
-	// TODO (date types in go?)
-	return false
+func expired(date time.Time) bool {
+	return date.After(date.Now())
 }
 
 func authorizeAction(url string, action string, did string, db *leveldb.DB) bool {
@@ -159,12 +160,13 @@ func addPermission(permission PermissionJson, db *leveldb.DB) {
 	handleErr(err, Panic)
 }
 
+// TODO
 func registerSchema(url string, schema []byte, did string, db *leveldb.DB) { // TODO: Should both db and did be made a part of the ctx, or of some other shared object passed everywhere?
 	schemaUrl := getMetadataUrl(url, "schema")
 
 	// 1. TODO: Make sure did owns the domain
 
-	// 2. Check whether a schema already exists at this URL. If so, version it.
+	// 2. Check whether a schema already exists at this domain. If so, version it.
 	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
 	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
 	err := db.Put([]byte(schemaUrl), schema, nil)
@@ -174,6 +176,7 @@ func registerSchema(url string, schema []byte, did string, db *leveldb.DB) { // 
 	}
 }
 
+// TODO
 func validateDataToSchema(data []byte, schema []byte) bool {
 	return false
 }
@@ -191,11 +194,38 @@ func registerDataUpdate(url string, db *leveldb.DB) {
 	ntf := Notification{
 		Url: url,
 		Reason: "update",
-		date: Date(),
-		SenderID: did??Node ID?,
+		date: time.Now(),
+		SenderID: did??Node ID?, // TODO
 	}
 
 	sendMessage(ctx, url)
+}
+
+type Request struct {
+	SenderID string
+	Url string
+	Action string // Read, write, or request capabilities
+	Capabilities? []CapabilityJson
+	// I'm pretty sure HTTP deals with the whole concept of request IDs, so why not use it?
+}
+
+// TODO
+func requestResource(url string) []byte {
+	// Since it will be stored on the source node, need to find that node and request
+	// Find via IP/DNS? But can URL Schemes other than http be resolved?
+	// Does libp2p offer some obvious solution to this?
+	// Would make sense though for entities to run their nodes as servers at a certain URL...they shouldn't have to own one though.
+	// nvm...you want to route to the username part of the domain
+
+	parsedUrl := parseUrl(url)
+	user = parsedUrl.user
+	// Then does user need to be resolved to DID?
+	// Then resolve the DID to an IP address.
+	// Then make the request to the IP address.
+	// Types of requests to a resource might include:
+	// - Get the value
+	// - Obtain/purchase a capability (this is the same as just writing to the permissions resource, but this has to be a special case)
+	// - More generally, exercise one of these capabilities (read, write)
 }
 
 // Every node maintains the permissions for that user.
