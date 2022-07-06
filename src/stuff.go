@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -34,10 +35,16 @@ func handleErr(err error, action ErrorHandleAction) {
 	}
 }
 
-// TODO
 func parseUrl(url string) UrlJson {
 
 	urlJson := new(UrlJson)
+
+	segs := strings.Split(url, "://")
+	urlJson.schema = segs[0]
+
+	segs = strings.Split(segs[1], '.')
+	urlJson.user = segs[0]
+	urlJson.domain = strings.Join(segs[1:], '.')
 
 	return urlJson
 }
@@ -191,11 +198,13 @@ type Notification struct {
 // When new data, send a message to all subscribers of the URL of the form described above
 func registerDataUpdate(url string, db *leveldb.DB) {
 
+	urlJson := parseUrl(url)
+
 	ntf := Notification{
 		Url: url,
 		Reason: "update",
 		date: time.Now(),
-		SenderID: did??Node ID?, // TODO
+		SenderID: urlJson.user
 	}
 
 	sendMessage(ctx, url)
