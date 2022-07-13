@@ -12,7 +12,7 @@
     "capabilities": {
       "type": "array",
       "items": {
-        "$ref": "./capability.json"
+        "$ref": "./capability.schema.json"
       }
     },
     "entities": {

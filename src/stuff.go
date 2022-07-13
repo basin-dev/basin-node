@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // This is what is run when notification is recieved of fresh data from the source.
@@ -183,9 +184,18 @@ func registerSchema(url string, schema []byte, did string, db *leveldb.DB) { // 
 	}
 }
 
-// TODO
-func validateDataToSchema(data []byte, schema []byte) bool {
-	return false
+func validateDataToSchema(data []byte, dataUrl string, db *leveldb.DB) (bool, []gojsonschema.ResultError) {
+	schemaUrl := getMetadataUrl(dataUrl, "schema")
+	schema, err := db.Get([]byte(schemaUrl), nil)
+	handleErr(err, LogFatal)
+
+	schemaLoader := gojsonschema.NewBytesLoader(schema)
+	dataLoader := gojsonschema.NewBytesLoader(data)
+
+	result, err := gojsonschema.Validate(schemaLoader, dataLoader)
+	handleErr(err, LogFatal)
+
+	return result.Valid(), result.Errors()
 }
 
 type Notification struct {

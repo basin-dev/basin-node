@@ -14,7 +14,7 @@
       }
     },
     "schema": {
-      "type": "object" // Is there a $ref url for a JSON Schema specification of itself?
+      "type": "object"
     },
     "name": {
       "type": "string"

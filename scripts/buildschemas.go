@@ -1,27 +1,32 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/xeipuuv/gojsonschema"
+	"log"
+	"os/exec"
 )
 
-func main() {
-
-	schemaLoader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
-	documentLoader := gojsonschema.NewReferenceLoader("file:///home/me/document.json")
-
-	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+func exCmd(cmd *exec.Cmd) {
+	out, err := cmd.Output()
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err, string(out))
 	}
+	log.Print(string(out))
+}
 
-	if result.Valid() {
-		fmt.Printf("The document is valid\n")
-	} else {
-		fmt.Printf("The document is not valid. see errors :\n")
-		for _, desc := range result.Errors() {
-			fmt.Printf("- %s\n", desc)
-		}
+/* Strips JSON Schema to the subset that is JSON Typedef, for easier code generation (better ecosystem) */
+func genTypedef(path string) {
+	
+}
+
+func main() {
+	names := []string{"capability", "permission", "url", "manifest"}
+	list := ""
+	for _, name := range names {
+		list = list + "schemas/" + name + ".schema.json "
 	}
+	println("LIST: ", "gojsonschema -p main " + list + "> src/types.go")
+	cmd := exec.Command("bash", "-c", "gojsonschema -p main " + list + "> src/types.go")
+	cmd.Dir = "../"
+	exCmd(cmd)
+
 }
