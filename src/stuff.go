@@ -110,7 +110,7 @@ func readData(url string, did string, db *leveldb.DB) []byte {
 		return false
 	}
 
-	val, err := db.Get([]byte(url), nil)
+	val, err := db.Get([]byte(url), nil) // TODO - Call the HTTP URL that implements the Basin Interface
 	if err != nil {
 		return false // TODO: Need some way to propogate errors
 	}
@@ -125,7 +125,7 @@ func writeData(url string, value []byte, did string, db *leveldb.DB) bool {
 
 	// TODO: Validate with schema
 
-	err := db.Put([]byte(url), value, nil)
+	err := db.Put([]byte(url), value, nil) // TODO: Again, call HTTP URL, Basin Interface, blah, blah
 
 	if err != nil {
 		return false
@@ -204,6 +204,7 @@ type Notification struct {
 	SenderID string
 }
 
+// TODO
 // Do we want some append only record of when updates happen?
 // When new data, send a message to all subscribers of the URL of the form described above
 func registerDataUpdate(url string, db *leveldb.DB) {
@@ -228,7 +229,7 @@ type Request struct {
 	// I'm pretty sure HTTP deals with the whole concept of request IDs, so why not use it?
 }
 
-// TODO
+// TODO - is this supposed to be subscribe function?
 func requestResource(url string) []byte {
 	// Since it will be stored on the source node, need to find that node and request
 	// Find via IP/DNS? But can URL Schemes other than http be resolved?
