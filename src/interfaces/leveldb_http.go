@@ -1,7 +1,6 @@
 package interfaces
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -87,7 +86,7 @@ func RunHTTPServer(db *leveldb.DB) {
 			return
 		}
 
-		w.Write(true)
+		w.Write([]byte("true"))
 		w.WriteHeader(200)
 	})
 
@@ -104,9 +103,4 @@ func RunHTTPServer(db *leveldb.DB) {
 	})
 
 	log.Fatal(http.Serve(listener, nil))
-}
-
-func main() {
-	db := startDB()
-	RunHTTPServer(db)
 }

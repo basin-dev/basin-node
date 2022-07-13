@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ const (
 	LogFatal
 )
 
-func handleErr(err error, action ErrorHandleAction) {
+func HandleErr(err error, action ErrorHandleAction) {
 	if err != nil {
 		switch action {
 		case Panic:
@@ -36,7 +36,7 @@ func handleErr(err error, action ErrorHandleAction) {
 	}
 }
 
-func parseUrl(url string) UrlJson {
+func ParseUrl(url string) UrlJson {
 
 	urlJson := new(UrlJson)
 
