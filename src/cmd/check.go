@@ -29,20 +29,20 @@ var checkCmd = &cobra.Command{
 		switch mode {
 		case "consumer":
 			switch entity {
-			case "data":
-				fmt.Println("check in consumer mode called with data entity")
+			case "sources":
+				fmt.Println("check in consumer mode called with sources entity")
 			default:
-				fmt.Println("error: check in consumer mode must be called with data entity")
+				fmt.Println("error: check in consumer mode must be called with sources entity")
 			}
 		case "producer":
 			switch entity {
-			case "data":
-				fmt.Println("check in producer mode called with data entity")
+			case "sources":
+				fmt.Println("check in producer mode called with sources entity")
 			default:
-				fmt.Println("error: check in producer mode must be called with data entity")
+				fmt.Println("error: check in producer mode must be called with sources entity")
 			}
 		default:
-			fmt.Println("error: checks must be called in either consumer or producer mode with data entity.")
+			fmt.Println("error: checks must be called in either consumer or producer mode with sources entity.")
 		}
 
 	},
@@ -52,7 +52,7 @@ func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.PersistentFlags().StringP("mode", "m", "", "consumer or producer mode")
 	checkCmd.MarkPersistentFlagRequired("mode")
-	checkCmd.PersistentFlags().StringP("entity", "e", "", "entities (e.g. data)")
+	checkCmd.PersistentFlags().StringP("entity", "e", "", "entities (e.g. sources)")
 	checkCmd.MarkPersistentFlagRequired("entity")
 	// https://github.com/spf13/cobra/blob/main/user_guide.md#flag-groups
 	// rootCmd.MarkFlagsRequiredTogether("username", "password")
