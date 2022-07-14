@@ -24,13 +24,25 @@ var modifyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		mode, _ := cmd.Flags().GetString("mode")
+		entity, _ := cmd.Flags().GetString("entity")
 
-		if mode == "consumer" {
-			fmt.Println("modify called in consumer mode.")
-		} else if mode == "producer" {
-			fmt.Println("modify called in producer mode.")
-		} else {
-			fmt.Println("modify must be called in either consumer or producer mode.")
+		switch mode {
+		case "consumer":
+			switch entity {
+			case "data":
+				fmt.Println("modify in consumer mode called with data entity")
+			default:
+				fmt.Println("error: modify in consumer mode must be called with data entity")
+			}
+		case "producer":
+			switch entity {
+			case "data":
+				fmt.Println("modify in producer mode called with data entity")
+			default:
+				fmt.Println("error: modify in producer mode must be called with data entity")
+			}
+		default:
+			fmt.Println("error: modify must be called in either consumer or producer mode with data entity.")
 		}
 
 	},
@@ -40,6 +52,8 @@ func init() {
 	rootCmd.AddCommand(modifyCmd)
 	modifyCmd.PersistentFlags().StringP("mode", "m", "", "consumer or producer mode")
 	modifyCmd.MarkPersistentFlagRequired("mode")
+	modifyCmd.PersistentFlags().StringP("entity", "e", "", "entities (e.g. data)")
+	modifyCmd.MarkPersistentFlagRequired("entity")
 	// https://github.com/spf13/cobra/blob/main/user_guide.md#flag-groups
 	// rootCmd.MarkFlagsRequiredTogether("username", "password")
 }
