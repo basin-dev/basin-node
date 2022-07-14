@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Basin authors@basin.dev
 
 */
 package cmd
@@ -21,7 +21,7 @@ var modifyCmd = &cobra.Command{
 	- schemas
 	- cache
 	- wallet
-	as a consumer, producer, or user.`,
+	as a consumer or producer.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("modify called")
 	},

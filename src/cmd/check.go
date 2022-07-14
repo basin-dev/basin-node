@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Basin authors@basin.dev
 
 */
 package cmd
@@ -13,15 +13,15 @@ import (
 // checkCmd represents the check command
 var checkCmd = &cobra.Command{
 	Use:   "check",
-	Short: "View current metadata settings",
-	Long: `View current metadata settings, including
+	Short: "View current metadata",
+	Long: `View current metadata, including
 	- data
 	- permissions
 	- royalties
 	- schemas
 	- cache
 	- wallet
-	as a consumer, producer, or user.`,
+	as a consumer or producer.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("check called")
 	},
