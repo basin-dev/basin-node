@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 Basin authors@basin.dev
-
 */
 package cmd
 
@@ -23,20 +22,23 @@ var checkCmd = &cobra.Command{
 	- wallet
 	as a consumer or producer.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("check called")
+		mode, _ := cmd.Flags().GetString("mode")
+
+		if mode == "consumer" {
+			fmt.Println("modify called in consumer mode.")
+		} else if mode == "producer" {
+			fmt.Println("modify called in producer mode.")
+		} else {
+			fmt.Println("modify must be called in either consumer or producer mode.")
+		}
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(checkCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// checkCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// checkCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	checkCmd.PersistentFlags().StringP("mode", "m", "", "consumer or producer mode")
+	checkCmd.MarkPersistentFlagRequired("mode")
+	// https://github.com/spf13/cobra/blob/main/user_guide.md#flag-groups
+	// rootCmd.MarkFlagsRequiredTogether("username", "password")
 }
