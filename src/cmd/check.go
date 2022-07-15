@@ -14,7 +14,7 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "View current metadata",
 	Long: `View current metadata, including
-	- data
+	- sources
 	- permissions
 	- royalties
 	- schemas
