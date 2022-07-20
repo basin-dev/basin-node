@@ -29,3 +29,11 @@ type PermissionJson struct {
 	Capabilities []CapabilityJson
 	Entities     []string
 }
+
+// TODO: Is this a totally open-ended JSON Schema document?
+type SchemaJson struct {
+}
+
+type WalletInfoJson struct {
+	Did string
+}
