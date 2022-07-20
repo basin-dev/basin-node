@@ -3,11 +3,11 @@ Basically this is only responsible for deciding whether the URL is Basin, Local,
 The meta adapter lives on the node.
 It is only a NICE TO HAVE feature right now.
 */
-package interfaces
+package adapters
 
 type Adapter interface {
 	Read(url string) []byte
-	Write(url string, value []byte) []byte
+	Write(url string, value []byte) bool
 }
 
 type MetaAdapter struct{}

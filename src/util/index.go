@@ -17,6 +17,11 @@ func Unmarshal[T any](data []byte) *T {
 
 type ErrorHandleAction int64
 
+/*
+Panic is when you want to share stack track trace with the programmer.
+
+log.Fatal is for end user error messages.
+*/
 const (
 	Panic ErrorHandleAction = iota
 	LogFatal
