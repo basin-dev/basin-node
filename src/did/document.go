@@ -1,9 +1,12 @@
+/*
+The contents of this file are no longer being used, but might be useful later if we decide to make our own library.
+Now using github.com/nuts-foundation/go-did/did
+*/
+
 package did
 
 import (
 	"encoding/json"
-
-	. "github.com/ockam-network/did"
 
 	"net/url"
 )
@@ -40,7 +43,7 @@ func (c *Controller) MarshalJSON() ([]byte, error) {
 }
 
 type DidDocument struct {
-	Id          DID        `json:"id"`
+	Id          string     `json:"id"` // TODO: Is there a way to automatically parse this with a custom unmarshaler? Can't add method to non-local struct, but maybe wrapper
 	Context     []url.URL  `json:"@context"`
 	AlsoKnownAs []string   `json:"alsoKnownAs,omitempty"`
 	Controller  Controller `json:"controller,omitempty"`

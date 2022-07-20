@@ -1,9 +1,12 @@
 package did
 
 import (
+	"encoding/json"
 	"errors"
 
 	. "github.com/ockam-network/did"
+
+	goDid "github.com/nuts-foundation/go-did/did"
 )
 
 type Resolver interface {
@@ -14,7 +17,7 @@ type MetaResolver struct {
 	Resolvers map[string]Resolver
 }
 
-func (m MetaResolver) Resolve(did string) ([]byte, error) {
+func (m MetaResolver) Resolve(did string) (*goDid.Document, error) {
 	parsed, err := Parse(did)
 	if err != nil {
 		return nil, err
@@ -22,11 +25,15 @@ func (m MetaResolver) Resolve(did string) ([]byte, error) {
 
 	resolver, prs := m.Resolvers[parsed.Method]
 	if prs {
-		doc, err := resolver.Resolve(did)
+		rawDoc, err := resolver.Resolve(did)
 		if err != nil {
 			return nil, err
 		}
-		return doc, nil
+
+		doc := new(goDid.Document)
+		err = json.Unmarshal(rawDoc, doc)
+
+		return doc, err
 	} else {
 		return nil, errors.New("Resolver for did not found")
 	}
