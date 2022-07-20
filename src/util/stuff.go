@@ -18,52 +18,6 @@ func logFreshData(urls []string) {
 	return true
 }
 
-type ErrorHandleAction int64
-
-const (
-	Panic ErrorHandleAction = iota
-	LogFatal
-)
-
-func HandleErr(err error, action ErrorHandleAction) {
-	if err != nil {
-		switch action {
-		case Panic:
-			panic(err)
-		case LogFatal:
-			log.Fatal(err)
-		}
-	}
-}
-
-func ParseUrl(url string) UrlJson {
-
-	urlJson := new(UrlJson)
-
-	segs := strings.Split(url, "://")
-	urlJson.schema = segs[0]
-
-	segs = strings.Split(segs[1], '.')
-	urlJson.user = segs[0]
-	urlJson.domain = strings.Join(segs[1:], '.')
-
-	return urlJson
-}
-
-func printUrl(url UrlJson) string {
-	return url.scheme + "://" + url.user + "." + url.domain
-}
-
-func getMetadataUrl(dataUrl string, prefix string) string {
-	parsed := parseUrl(dataUrl)
-	parsed.domain = "meta." + prefix + "." + parsed.domain
-	return printUrl(parsed)
-}
-
-func getUserDataUrl(did string, dataName string) string {
-	return "basin://" + did + ".basin." + dataName
-}
-
 func contains(slice []interface{}, val interface{}) bool {
 	for _, item := range slice {
 		if val == item {
@@ -263,17 +217,6 @@ func requestResource(url string) []byte {
 
 // Does it make sense for basin urls to match entirely with https urls?
 // So...
-
-func getPermissions(dataUrl string, db *leveldb.DB) *[]PermissionJson {
-	url := getMetadataUrl(dataUrl, "permissions")
-	data, err := db.Get([]byte(url), nil) // OR use readData? YES
-	handleErr(err, LogFatal)
-
-	permissions := new([]PermissionJson)
-	json.Unmarshal(data, permissions)
-
-	return permissions
-}
 
 func getSchema(dataUrl string, db *leveldb.DB) *[]SchemaJson {
 	url := getMetadataUrl(dataUrl, "schema")
