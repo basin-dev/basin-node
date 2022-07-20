@@ -1,4 +1,8 @@
-package util
+/** Everything in this file is just scratch work and should not be used.
+All function names are lowercased so that they are not exported.
+*/
+
+package scratch
 
 import (
 	"encoding/json"

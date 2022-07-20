@@ -1,6 +1,6 @@
 // This file contains functions for CLI commands that work with the manifest.json file.
 
-package main
+package scratch
 
 import (
 	"encoding/json"
