@@ -56,7 +56,12 @@ func printUrl(url UrlJson) string {
 
 func getMetadataUrl(dataUrl string, prefix string) string {
 	parsed := parseUrl(dataUrl)
-	url.domain = "meta." + prefix + "." + url.domain
+	parsed.domain = "meta." + prefix + "." + parsed.domain
+	return printUrl(parsed)
+}
+
+func getUserDataUrl(did string, dataName string) string {
+	return "basin://" + did + ".basin." + dataName
 }
 
 func contains(slice []interface{}, val interface{}) bool {
@@ -258,3 +263,106 @@ func requestResource(url string) []byte {
 
 // Does it make sense for basin urls to match entirely with https urls?
 // So...
+
+func getPermissions(dataUrl string, db *leveldb.DB) *[]PermissionJson {
+	url := getMetadataUrl(dataUrl, "permissions")
+	data, err := db.Get([]byte(url), nil) // OR use readData? YES
+	handleErr(err, LogFatal)
+
+	permissions := new([]PermissionJson)
+	json.Unmarshal(data, permissions)
+
+	return permissions
+}
+
+func getSchema(dataUrl string, db *leveldb.DB) *[]SchemaJson {
+	url := getMetadataUrl(dataUrl, "schema")
+	data, err := db.Get([]byte(url), nil)
+	handleErr(err, LogFatal)
+
+	schema := new([]SchemaJson)
+	json.Unmarshal(data, schema)
+
+	return schema
+}
+
+func getSources(mode string, db *leveldb.DB) *[]string {
+	walletInfo := getWalletInfo(db)
+	url := getUserDataUrl(walletInfo.did, mode + ".urls") // OR could do "urls.<mode>". Should probably match the CLI's order
+	data, err := db.Get([]byte(url), nil)
+	handleErr(err, LogFatal)
+
+	sources := new([]string)
+	json.Unmarshal(data, sources)
+
+	return sources
+}
+
+// I need to figure out a way to access the leveldb.DB without passing it around, but for now it's in every function call...
+
+func getReputation(mode string, db *leveldb.DB) *ReputationJson {
+	walletInfo := getWalletInfo(db)
+	url := getUserDataUrl(walletInfo.did, mode + ".reputation")
+	data, err := db.Get([]byte(url), nil)
+	handleErr(err, LogFatal)
+
+	reputation := new(ReputationJson)
+	json.Unmarshal(data, reputation)
+
+	return reputation
+}
+
+func getWalletInfo(db *leveldb.DB) *WalletInfoJson {
+	// "Local data" will almost certainly have to be a concept. There's no reason another node should be able to query this info.
+	// It makes sense to still store in leveldb though, so separating by using a different scheme: "local://"
+	data, err := db.Get([]byte("local://wallet"), nil)
+	handleErr(err, LogFatal)
+
+	walletInfo := new([]WalletInfoJson)
+	json.Unmarshal(data, walletInfo)
+
+	return walletInfo
+}
+
+func getRequests() {
+	// I would hope this isn't necessary.
+	// Like HTTP, all requests either happen right away or are failed, or is there something you're seeing that makes this necessary?
+}
+
+func getRoyalties(db *leveldb.DB) *RoyaltiesJson {
+	walletInfo := getWalletInfo(db)
+	url := getUserDataUrl(walletInfo.did, mode + ".royalties")
+	data, err := db.Get([]byte(url), nil)
+	handleErr(err, LogFatal)
+
+	royalties := new(RoyaltiesJson)
+	json.Unmarshal(data, royalties)
+
+	return royalties
+}
+
+func getSchemas(mode string, db *leveldb.DB) *[]SchemaJson {
+	basinUrls := getBasinUrls(mode, db)
+
+	var schemas []SchemaJson
+
+	for _, basinUrl := range basinUrls {
+		schema := getSchema(basinUrl, db)
+		append(schemas, schema)
+	}
+
+	return *schemas
+}
+
+func getCacheExpectations(mode string, db *leveldb.DB) *[]CacheExpectationJson {
+	walletInfo := getWalletInfo(db)
+	url := getUserDataUrl(walletInfo.did, mode + ".royalties")
+	data, err := db.Get([]byte(url), nil)
+	handleErr(err, LogFatal)
+
+	royalties := new(RoyaltiesJson)
+	json.Unmarshal(data, royalties)
+
+	return royalties
+}
+

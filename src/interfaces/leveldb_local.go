@@ -1,20 +1,38 @@
 package interfaces
 
 import (
+	"context"
+
 	. "github.com/sestinj/basin-node/util"
 	leveldb "github.com/syndtr/goleveldb/leveldb"
 )
 
-func read(url string, db *leveldb.DB) []byte {
-	val, err := db.Get([]byte(url), nil)
+var (
+	localAdapter LocalAdapter
+)
+
+type LocalAdapter struct {
+	db *leveldb.DB
+}
+
+func (l LocalAdapter) Read(url string, ctx context.Context) []byte {
+
+	val, err := l.db.Get([]byte(url), nil)
 	HandleErr(err, LogFatal)
 
 	return val
 }
 
-func write(url string, val []byte, db *leveldb.DB) bool {
-	err := db.Put([]byte(url), val, nil)
+func (l LocalAdapter) Write(url string, val []byte) bool {
+	err := l.db.Put([]byte(url), val, nil)
 	HandleErr(err, LogFatal)
 
 	return true
+}
+
+func StartDB() {
+	db, err := leveldb.OpenFile("/tmp/db", nil)
+	HandleErr(err, LogFatal)
+
+	localAdapter = LocalAdapter{db}
 }
