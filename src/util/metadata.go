@@ -44,5 +44,5 @@ func GetSchemas(mode string) *[]SchemaJson {
 		schemas = append(schemas, *schema)
 	}
 
-	return schemas
+	return &schemas
 }
