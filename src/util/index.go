@@ -56,12 +56,12 @@ func PrintUrl(url *UrlJson) string {
 	return url.Scheme + "://" + url.User + "." + url.Domain
 }
 
-func GetMetadataUrl(dataUrl string, prefix string) string {
+func GetMetadataUrl(dataUrl string, prefix MetadataPrefix) string {
 	parsed := ParseUrl(dataUrl)
-	parsed.Domain = "meta." + prefix + "." + parsed.Domain
+	parsed.Domain = "meta." + prefix.String() + "." + parsed.Domain
 	return PrintUrl(parsed)
 }
 
 func GetUserDataUrl(did string, dataName string) string {
-	return "basin://" + did + ".basin." + dataName
+	return "basin://" + did + ".basin." + dataName.String()
 }
