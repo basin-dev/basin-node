@@ -65,3 +65,18 @@ func GetMetadataUrl(dataUrl string, prefix MetadataPrefix) string {
 func GetUserDataUrl(did string, dataName string) string {
 	return "basin://" + did + ".basin." + dataName.String()
 }
+
+// basin://com.natesesti.com.fb.firstname
+// basin://com.natesesti.meta.schema.fb.firstname
+// basin://com.natesesti.basin.producers.sources
+
+// basin://com.twitter.users.tydunn
+
+func Contains[T comparable](slice []T, val T) bool {
+	for _, item := range slice {
+		if val == item {
+			return true
+		}
+	}
+	return false
+}

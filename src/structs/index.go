@@ -11,6 +11,7 @@ type UrlJson struct {
 type CapabilityJson struct {
 	Action     string `json:"action"`
 	Expiration string `json:"expiration"`
+	// TODO: Royalties here???
 }
 
 type PermissionJson struct {

@@ -34,6 +34,19 @@ func (m MetadataPrefix) String() string {
 
 // Here we read the metadata...but how does it appear? Work begins in the section below
 
+func getResource(url string) ([]byte, error) {
+	if Contains(*GetSources("producer"), url) {
+		// Determine which adapter to use
+
+		// This would also probably be the place to implement different guarantees?
+
+	} else {
+		// Use DNS/DHT to route to the node that produces this basin url
+
+		// Call requestResource to the next hop
+	}
+}
+
 func GetWalletInfo() *WalletInfoJson {
 	data := LocalAdapter.Read("local://wallet")
 
@@ -61,6 +74,15 @@ func GetSources(mode string) *[]string {
 	mdata := LocalAdapter.Read(url)
 
 	return Unmarshal[[]string](mdata)
+}
+
+func GetRequests(mode string) *[]PermissionJson {
+	walletInfo := GetWalletInfo()
+
+	url := GetUserDataUrl(walletInfo.Did, mode+".requests")
+	mdata := LocalAdapter.Read(url)
+
+	return Unmarshal[[]PermissionJson](mdata)
 }
 
 func GetSchemas(mode string) *[]SchemaJson {
@@ -146,5 +168,9 @@ func Register(manifestPath string) error {
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
+	return nil
+}
+
+func requestSubscription(url string) error {
 	return nil
 }

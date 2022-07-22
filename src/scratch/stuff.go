@@ -22,15 +22,6 @@ func logFreshData(urls []string) {
 	return true
 }
 
-func contains(slice []interface{}, val interface{}) bool {
-	for _, item := range slice {
-		if val == item {
-			return true
-		}
-	}
-	return false
-}
-
 func expired(date time.Time) bool {
 	return date.After(date.Now())
 }
