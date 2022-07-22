@@ -1,36 +1,12 @@
 // This file contains functions for CLI commands that work with the manifest.json file.
 
-package main
+package scratch
 
 import (
-	"encoding/json"
 	"io/ioutil"
 
 	"github.com/aymerick/raymond"
 )
-
-func loadManifest(path string) ManifestJson {
-	manifestRaw, err := ioutil.ReadFile(path)
-	if err != nil {
-		handleErr(err, LogFatal)
-	}
-
-	manifest := new(ManifestJson)
-	err = json.Unmarshal(manifestRaw, manifest)
-	if err != nil {
-		handleErr(err, LogFatal)
-	}
-	return manifest
-}
-
-func publishManifest(manifestPath string, resourceUrl string) {
-	url := getMetadataUrl(resourceUrl, "manifest")
-	permissionsUrl := getMetadataUrl(resourceUrl, "permissions")
-
-	// Set any default values and set permissions key/value
-
-	// Just like any other update - should tell subscribers (want a function for this)
-}
 
 type Dependency struct {
 	Url          string

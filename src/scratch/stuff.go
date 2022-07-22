@@ -1,4 +1,8 @@
-package main
+/** Everything in this file is just scratch work and should not be used.
+All function names are lowercased so that they are not exported.
+*/
+
+package scratch
 
 import (
 	"encoding/json"
@@ -16,56 +20,6 @@ import (
 // - Update to freshness record
 func logFreshData(urls []string) {
 	return true
-}
-
-type ErrorHandleAction int64
-
-const (
-	Panic ErrorHandleAction = iota
-	LogFatal
-)
-
-func handleErr(err error, action ErrorHandleAction) {
-	if err != nil {
-		switch action {
-		case Panic:
-			panic(err)
-		case LogFatal:
-			log.Fatal(err)
-		}
-	}
-}
-
-func parseUrl(url string) UrlJson {
-
-	urlJson := new(UrlJson)
-
-	segs := strings.Split(url, "://")
-	urlJson.schema = segs[0]
-
-	segs = strings.Split(segs[1], '.')
-	urlJson.user = segs[0]
-	urlJson.domain = strings.Join(segs[1:], '.')
-
-	return urlJson
-}
-
-func printUrl(url UrlJson) string {
-	return url.scheme + "://" + url.user + "." + url.domain
-}
-
-func getMetadataUrl(dataUrl string, prefix string) string {
-	parsed := parseUrl(dataUrl)
-	url.domain = "meta." + prefix + "." + url.domain
-}
-
-func contains(slice []interface{}, val interface{}) bool {
-	for _, item := range slice {
-		if val == item {
-			return true
-		}
-	}
-	return false
 }
 
 func expired(date time.Time) bool {
@@ -257,4 +211,3 @@ func requestResource(url string) []byte {
 // Add, modify, check, validate
 
 // Does it make sense for basin urls to match entirely with https urls?
-// So...
