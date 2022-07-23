@@ -1,6 +1,11 @@
 package main
 
 import (
+	cmd "basin-node/cmd"
+)
+
+/*
+import (
 	"context"
 	"encoding/json"
 	"flag"
@@ -175,7 +180,7 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 		sendMessage(ctx, topic, "Test Message at "+time.String(), selfID)
 	}
 }
-
+*/
 // package main
 
 // func main() {
@@ -189,3 +194,7 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 // 		println(msg)
 // 	}
 // }
+
+func main() {
+	cmd.Execute()
+}
