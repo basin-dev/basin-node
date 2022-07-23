@@ -1,15 +1,16 @@
-from typing import Union
-
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
-
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+async def help():
+    return "Learn how to use API: http://127.0.0.1:8000/docs"
 
+@app.get("/followers")
+async def read_followers():
+    return FileResponse('data/followers.json')
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/following")
+async def read_following():
+    return FileResponse('data/following.json')

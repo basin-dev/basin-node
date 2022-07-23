@@ -16,3 +16,4 @@
 
 # virtual environment for Python API
 testing/env
+testing/__pycache__
