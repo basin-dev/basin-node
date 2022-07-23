@@ -29,8 +29,8 @@ func SetRequest(dataURL string, permissions PermissionJson)
 # This seems better than this command based approach
 
 # e.g. the commands would be...
-# `basin-node resources pull` (or we could just have the leveldb always write updates to files)
-# `basin-node resources push` (or we could just have the leveldb always read changes to files)
+# `basin-node metadata pull` (or we could just have the leveldb always write updates to files)
+# `basin-node metadata push` (or we could just have the leveldb always read changes to files)
 # and then the directory structure would be like
 # Metadata
 # -- WalletInfo
@@ -39,6 +39,7 @@ func SetRequest(dataURL string, permissions PermissionJson)
 # ---- Requests
 # ------ outstanding-requests.json
 # ---- Basin URLs
+# ------ consumer-basin-urls.json
 # ------ basin-url-1
 # -------- basin-url-1-permissions.json
 # -------- basin-url-1-schema.json
@@ -52,6 +53,7 @@ func SetRequest(dataURL string, permissions PermissionJson)
 # ---- Requests
 # ------ outstanding-requests.json
 # ---- Basin URLs
+# ------ producer-basin-urls.json
 # ------ basin-url-4
 # -------- basin-url-4-permissions.json
 # -------- basin-url-4-schema.json
