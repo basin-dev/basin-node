@@ -15,3 +15,6 @@
 # vendor/
 
 natelocalnotes.txt
+# Python API for testing
+testing/env
+testing/__pycache__
