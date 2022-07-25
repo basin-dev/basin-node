@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build:schemas": "gojsonschema -p main schemas/permission.json > src/permission.go",
+    "update": "cd src && go get -u && go mod tidy"
+  }
+}

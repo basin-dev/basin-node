@@ -180,20 +180,8 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 		sendMessage(ctx, topic, "Test Message at "+time.String(), selfID)
 	}
 }
+
 */
-// package main
-
-// func main() {
-// 	println("a")
-
-// 	loop("2")
-// }
-
-// func loop(msg string) {
-// 	for {
-// 		println(msg)
-// 	}
-// }
 
 func main() {
 	cmd.Execute()

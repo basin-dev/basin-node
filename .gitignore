@@ -14,6 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+natelocalnotes.txt
 # Python API for testing
 testing/env
 testing/__pycache__
