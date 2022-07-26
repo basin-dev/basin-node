@@ -8,7 +8,6 @@ import (
 	adapters "github.com/sestinj/basin-node/adapters"
 	cmd "github.com/sestinj/basin-node/cmd"
 	"github.com/sestinj/basin-node/util"
-	// kademlia "github.com/libp2p/go-libp2p-kad-dht"
 )
 
 func main() {

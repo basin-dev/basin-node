@@ -9,6 +9,10 @@ import (
 	kademlia "github.com/libp2p/go-libp2p-kad-dht"
 )
 
+var (
+	HostRouter KademliaRouter
+)
+
 /*
 A Router is responsible for resolving a Basin URL to a host on the network, that can then be connected to.
 */
@@ -34,7 +38,7 @@ func (k KademliaRouter) ResolvePeer(ctx context.Context, url string) (libp2p_pee
 	return *addrInfo, err
 }
 
-/* This function is specific to the "KademliaRouter", our first simple version. It writes itself as the peer to contact for a Basin URL */
+/* This function is specific to the "KademliaRouter", our first simple version. It writes itself as the peer to contact for a Basin URL. This should be called when a new schema is registered by this node. */
 func (k KademliaRouter) RegisterUrl(ctx context.Context, url string) error {
 	addrInfo := libp2p_peer.AddrInfo{ID: k.host.ID(), Addrs: k.host.Addrs()}
 	val, err := json.Marshal(addrInfo)
@@ -54,5 +58,6 @@ func StartKademliaRouter(ctx context.Context, h libp2p_host.Host) (Router, error
 		return nil, err
 	}
 
-	return KademliaRouter{dht: dht, host: h}, nil
+	HostRouter = KademliaRouter{dht: dht, host: h}
+	return HostRouter, nil
 }
