@@ -30,18 +30,18 @@ type KademliaRouter struct {
 func (k KademliaRouter) ResolvePeer(ctx context.Context, url string) (libp2p_peer.AddrInfo, error) {
 	data, err := k.dht.GetValue(ctx, url, nil)
 
-	addrInfo := new(libp2p_peer.AddrInfo)
-	err = json.Unmarshal(data, addrInfo)
+	pi := new(libp2p_peer.AddrInfo)
+	err = json.Unmarshal(data, pi)
 	if err != nil {
-		return *addrInfo, err
+		return *pi, err
 	}
-	return *addrInfo, err
+	return *pi, err
 }
 
 /* This function is specific to the "KademliaRouter", our first simple version. It writes itself as the peer to contact for a Basin URL. This should be called when a new schema is registered by this node. */
 func (k KademliaRouter) RegisterUrl(ctx context.Context, url string) error {
-	addrInfo := libp2p_peer.AddrInfo{ID: k.host.ID(), Addrs: k.host.Addrs()}
-	val, err := json.Marshal(addrInfo)
+	pi := libp2p_peer.AddrInfo{ID: k.host.ID(), Addrs: k.host.Addrs()}
+	val, err := json.Marshal(pi)
 	if err != nil {
 		return err
 	}
