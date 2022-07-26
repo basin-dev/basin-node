@@ -33,11 +33,13 @@ func (l LevelDbLocalAdapter) Write(url string, val []byte) bool {
 	return true
 }
 
-func StartDB() {
+func StartDB() (*leveldb.DB, error) {
 	db, err := leveldb.OpenFile("/tmp/db", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	LocalAdapter = LevelDbLocalAdapter{db}
+
+	return db, err
 }

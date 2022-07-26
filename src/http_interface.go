@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -35,7 +36,7 @@ type writeBody struct {
 	Value []byte
 }
 
-func RunHttpServer() {
+func RunHttpServer(ctx context.Context) {
 	listener, err := net.Listen("tcp", "127.0.0.1:5000")
 	if err != nil {
 		log.Fatal(err)
