@@ -86,7 +86,7 @@ func RunHttpServer(ctx context.Context) {
 	})
 
 	handleAuth("/read", func(w http.ResponseWriter, r *http.Request) {
-		val, err := GetResource(r.URL.Query().Get("url"))
+		val, err := ReadResource(r.URL.Query().Get("url"))
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error reading resource: " + err.Error()))

@@ -1,8 +1,6 @@
 package util
 
 import (
-	"log"
-
 	leveldb "github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -18,22 +16,22 @@ type LocalOnlyDataInterface struct {
 	keyPrefix string
 }
 
-func (l LocalOnlyDataInterface) Read(key string) []byte {
+func (l LocalOnlyDataInterface) Read(key string) ([]byte, error) {
 	val, err := l.db.Get([]byte(l.keyPrefix+key), nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return val
+	return val, nil
 }
 
-func (l LocalOnlyDataInterface) Write(key string, val []byte) bool {
+func (l LocalOnlyDataInterface) Write(key string, val []byte) error {
 	err := l.db.Put([]byte(l.keyPrefix+key), val, nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	return true
+	return nil
 }
 
 func StartLocalOnlyDb(db *leveldb.DB, keyPrefix string) LocalOnlyDataInterface {

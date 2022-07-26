@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 
 	. "github.com/sestinj/basin-node/adapters"
 	. "github.com/sestinj/basin-node/structs"
@@ -35,7 +36,7 @@ func (m MetadataPrefix) String() string {
 
 // Here we read the metadata...but how does it appear? Work begins in the section below
 
-func GetResource(url string) ([]byte, error) {
+func ReadResource(url string) ([]byte, error) {
 	// if Contains(*GetSources("producer"), url) {
 	// 	// Determine which adapter to use
 
@@ -50,18 +51,25 @@ func GetResource(url string) ([]byte, error) {
 }
 
 func WriteResource(url string, value []byte) error {
+	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 	return errors.New("Not yet implemented")
 }
 
 func GetWalletInfo() *WalletInfoJson {
-	data := LocalAdapter.Read("local://wallet")
+	data, err := LocalOnlyDb.Read("wallet")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return Unmarshal[WalletInfoJson](data)
 }
 
 func GetPermissions(dataUrl string) *[]PermissionJson {
 	url := GetMetadataUrl(dataUrl, Permissions)
-	mdata := LocalAdapter.Read(url)
+	mdata, err := ReadResource(url)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return Unmarshal[[]PermissionJson](mdata)
 }
@@ -69,7 +77,11 @@ func GetPermissions(dataUrl string) *[]PermissionJson {
 func GetSchema(dataUrl string) *SchemaJson {
 	url := GetMetadataUrl(dataUrl, Schema)
 
-	mdata := LocalAdapter.Read(url)
+	mdata, err := ReadResource(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return Unmarshal[SchemaJson](mdata)
 }
 
@@ -77,7 +89,10 @@ func GetSources(mode string) *[]string {
 	walletInfo := GetWalletInfo()
 
 	url := GetUserDataUrl(walletInfo.Did, mode+".sources")
-	mdata := LocalAdapter.Read(url)
+	mdata, err := ReadResource(url)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return Unmarshal[[]string](mdata)
 }
@@ -86,7 +101,10 @@ func GetRequests(mode string) *[]PermissionJson {
 	walletInfo := GetWalletInfo()
 
 	url := GetUserDataUrl(walletInfo.Did, mode+".requests")
-	mdata := LocalAdapter.Read(url)
+	mdata, err := ReadResource(url)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return Unmarshal[[]PermissionJson](mdata)
 }
@@ -149,23 +167,33 @@ func Register(manifestPath string) error {
 	if err != nil {
 		return err
 	}
-	LocalAdapter.Write(permUrl, permsRaw)
+
+	err = WriteResource(permUrl, permsRaw)
+	if err != nil {
+		return err
+	}
 
 	// SCHEMA
 	schemaUrl := GetMetadataUrl(manifest.Url, Schema)
 	schemaRaw, err := json.Marshal(manifest.Schema) // TODO: What is the shape of the schema?
-	LocalAdapter.Write(schemaUrl, schemaRaw)
+	err = WriteResource(schemaUrl, schemaRaw)
+	if err != nil {
+		return err
+	}
 
 	// MANIFEST
 	manifestUrl := GetMetadataUrl(manifest.Url, Manifest)
 	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
 	// This is when we want to start storing things as actual files? Just start thinking about it.
-	LocalAdapter.Write(manifestUrl, manifestRaw)
+	err = WriteResource(manifestUrl, manifestRaw)
+	if err != nil {
+		return err
+	}
 
 	// SOURCES
 	walletInfo := GetWalletInfo()
 	sourcesUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
-	currSrcs := LocalAdapter.Read(sourcesUrl)
+	currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
 	var srcs []string
 	err = json.Unmarshal(currSrcs, srcs)
 	if err != nil {
@@ -176,7 +204,10 @@ func Register(manifestPath string) error {
 	if err != nil {
 		return err
 	}
-	LocalAdapter.Write(sourcesUrl, finalSrcs)
+	err = WriteResource(sourcesUrl, finalSrcs)
+	if err != nil {
+		return err
+	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
