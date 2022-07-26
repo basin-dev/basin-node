@@ -7,8 +7,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-
-	. "github.com/sestinj/basin-node/util"
 )
 
 /*
