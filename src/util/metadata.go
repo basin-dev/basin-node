@@ -100,6 +100,12 @@ func GetSchemas(mode string) *[]SchemaJson {
 
 // Working on making the metadata appear...
 func Register(manifestPath string) error {
+	// A couple of todos for later...
+	// 1. TODO: Make sure did owns the domain
+	// 2. TODO: Check whether a schema already exists at this domain. If so, version it.
+	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
+	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
+
 	manifestRaw, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return err
