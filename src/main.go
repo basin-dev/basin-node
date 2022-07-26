@@ -21,7 +21,13 @@ func main() {
 		panic(err)
 	}
 
-	// Create new pubsub
+	// Create the Router
+	_, err = StartKademliaRouter(ctx, host)
+	if err != nil {
+		log.Fatal("Failed to instantiate router: ", err.Error())
+	}
+
+	// Create new PubSub
 	_, err = StartPubSub(ctx, host)
 	if err != nil {
 		log.Fatal("Failed to instantiate pubsub: " + err.Error())
