@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 
 	. "github.com/sestinj/basin-node/adapters"
@@ -34,17 +35,22 @@ func (m MetadataPrefix) String() string {
 
 // Here we read the metadata...but how does it appear? Work begins in the section below
 
-func getResource(url string) ([]byte, error) {
-	if Contains(*GetSources("producer"), url) {
-		// Determine which adapter to use
+func GetResource(url string) ([]byte, error) {
+	// if Contains(*GetSources("producer"), url) {
+	// 	// Determine which adapter to use
 
-		// This would also probably be the place to implement different guarantees?
+	// 	// This would also probably be the place to implement different guarantees?
 
-	} else {
-		// Use DNS/DHT to route to the node that produces this basin url
+	// } else {
+	// 	// Use DNS/DHT to route to the node that produces this basin url
 
-		// Call requestResource to the next hop
-	}
+	// 	// Call requestResource to the next hop
+	// }
+	return nil, errors.New("Not yet implemented")
+}
+
+func WriteResource(url string, value []byte) error {
+	return errors.New("Not yet implemented")
 }
 
 func GetWalletInfo() *WalletInfoJson {
@@ -177,6 +183,6 @@ func Register(manifestPath string) error {
 	return nil
 }
 
-func requestSubscription(url string) error {
+func RequestSubscription(url string) error {
 	return nil
 }

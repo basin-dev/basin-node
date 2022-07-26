@@ -42,14 +42,6 @@ func setupLANDiscovery(h libp2p_host.Host) error {
 	return service.Start()
 }
 
-// func setupKademlia(ctx, context.Context, libp2p_host.Host) error {
-// 	dht, err := kademlia.New(ctx, h)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return dht
-// }
-
 func joinSchemaTopic(ps *pubsub.PubSub) (*pubsub.Topic, *pubsub.Subscription) {
 	// Join/create a pubsub topic
 	topic, err := ps.Join("schema-topic:" + "test-topic")
@@ -160,5 +152,5 @@ func main() {
 
 	// I'd like this to be another goroutine, so what's the best way to have a main forever loop?
 	// Right now just leaving the last as non-goroutine so the others get started
-	go printUpdateStream(updateChan)
+	printUpdateStream(updateChan)
 }

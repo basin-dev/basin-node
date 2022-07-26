@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+
+	. "github.com/sestinj/basin-node/util"
 )
 
 /*
@@ -45,6 +47,17 @@ func RunHttpServer() {
 		fmt.Fprint(w, "Hello. The server hears your request and responds.")
 	})
 
+	handleAuth("/requestSubscription", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "POST":
+			w.WriteHeader(500)
+			w.Write([]byte("Not yet implemented"))
+		default:
+			w.WriteHeader(400)
+			w.Write([]byte("Invalid method, " + r.Method))
+		}
+	})
+
 	// TODO: Need to perform authentication on the caller. Should have their DID and a credential to prove it!!!!
 	handleAuth("/write", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
@@ -60,15 +73,23 @@ func RunHttpServer() {
 		}
 
 		// TODO: Then further marshal and validate value based on the schema
-
-		LocalAdapter.Write(bodyjson.Url, []byte(bodyjson.Value))
+		err = WriteResource(bodyjson.Url, bodyjson.Value)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Error writing to resource: " + err.Error()))
+			return
+		}
 
 		w.Write([]byte("true"))
 		w.WriteHeader(200)
 	})
 
 	handleAuth("/read", func(w http.ResponseWriter, r *http.Request) {
-		val := LocalAdapter.Read(r.URL.Query().Get("url"))
+		val, err := GetResource(r.URL.Query().Get("url"))
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Error reading resource: " + err.Error()))
+		}
 
 		w.Write(val)
 		w.WriteHeader(200)
