@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	libp2p "github.com/libp2p/go-libp2p"
 	adapters "github.com/sestinj/basin-node/adapters"
 	cmd "github.com/sestinj/basin-node/cmd"
 	"github.com/sestinj/basin-node/util"
@@ -12,6 +13,19 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	// Create listener on port
+	host, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
+	if err != nil {
+		println("host err")
+		panic(err)
+	}
+
+	// Create new pubsub
+	_, err = StartPubSub(ctx, host)
+	if err != nil {
+		log.Fatal("Failed to instantiate pubsub: " + err.Error())
+	}
 
 	// Start up the local LevelDB database
 	db, err := adapters.StartDB()

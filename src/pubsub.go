@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	libp2p "github.com/libp2p/go-libp2p"
-
 	libp2p_host "github.com/libp2p/go-libp2p-core/host"
 
 	// kademlia "github.com/libp2p/go-libp2p-kad-dht"
@@ -118,39 +116,35 @@ func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
 	}
 }
 
-func main() {
-
-	// Create listener on port
-	host, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
-	if err != nil {
-		println("host err")
-		panic(err)
-	}
-
-	// Create pubsub
+/* Instantiate a new libp2p PubSub */
+func StartPubSub(ctx context.Context, host libp2p_host.Host) (*pubsub.PubSub, error) {
 	ps, err := pubsub.NewGossipSub(ctx, host)
 	if err != nil {
-		println("ps err")
-		panic(err)
+		return nil, err
 	}
 
-	// Setup LAN Discovery
-	if err := setupLANDiscovery(host); err != nil {
-		println("lan err")
-		panic(err)
-	}
-
-	topic, sub := joinSchemaTopic(ps)
-
-	updateChan := make(chan *Update)
-
-	println(topic.String())
-
-	go streamSubscription(ctx, sub, updateChan, host.ID())
-
-	go periodicMsgs(ctx, topic, host.ID())
-
-	// I'd like this to be another goroutine, so what's the best way to have a main forever loop?
-	// Right now just leaving the last as non-goroutine so the others get started
-	printUpdateStream(updateChan)
+	return ps, nil
 }
+
+// func main() {
+
+// 	// Setup LAN Discovery
+// 	if err := setupLANDiscovery(host); err != nil {
+// 		println("lan err")
+// 		panic(err)
+// 	}
+
+// 	topic, sub := joinSchemaTopic(ps)
+
+// 	updateChan := make(chan *Update)
+
+// 	println(topic.String())
+
+// 	go streamSubscription(ctx, sub, updateChan, host.ID())
+
+// 	go periodicMsgs(ctx, topic, host.ID())
+
+// 	// I'd like this to be another goroutine, so what's the best way to have a main forever loop?
+// 	// Right now just leaving the last as non-goroutine so the others get started
+// 	printUpdateStream(updateChan)
+// }
