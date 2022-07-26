@@ -1,0 +1,21 @@
+syntax = "proto3";
+package protocols.basin;
+
+option go_package = "/pb";
+
+// Data that is included in every message
+message MessageData {
+    string nodeId = 1; // ID of the sender libp2p node
+}
+
+message TestRequest {
+    MessageData messageData = 1;
+
+    string message = 2;
+}
+
+message TestResponse {
+    MessageData messageData = 1;
+
+    string message = 2;
+}
