@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	libp2p "github.com/libp2p/go-libp2p"
 	adapters "github.com/sestinj/basin-node/adapters"
 	cmd "github.com/sestinj/basin-node/cmd"
 	"github.com/sestinj/basin-node/util"
@@ -13,21 +12,27 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Create listener on port
-	host, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
+	// Start the BasinNode (libp2p host with associated protocol, stream handler)
+	basin, err := StartBasinNode()
 	if err != nil {
-		println("host err")
-		panic(err)
+		log.Fatal("Failed to instantiate the BasinNode: " + err.Error())
 	}
 
 	// Create the Router
-	_, err = StartKademliaRouter(ctx, host)
+	_, err = StartKademliaRouter(ctx, basin.Host)
 	if err != nil {
 		log.Fatal("Failed to instantiate router: ", err.Error())
 	}
 
+	// Start P2P (inter-node communication) HTTP Server and Client
+	StartClient(ctx, basin.Host)
+	err = StartP2pHttp(ctx, basin.Host)
+	if err != nil {
+		log.Fatal("Failed to instantiate P2P HTTP server: " + err.Error())
+	}
+
 	// Create new PubSub
-	_, err = StartPubSub(ctx, host)
+	_, err = StartPubSub(ctx, basin.Host)
 	if err != nil {
 		log.Fatal("Failed to instantiate pubsub: " + err.Error())
 	}

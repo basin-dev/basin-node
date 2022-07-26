@@ -29,7 +29,10 @@ func ReadResource(ctx context.Context, url string) ([]byte, error) {
 		return nil, err
 	}
 
-	err = HostRouter.Connect(ctx, pi)
+	resp, err = P2pHttpClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, errors.New("Not yet implemented")
 }
