@@ -24,13 +24,6 @@ func main() {
 		log.Fatal("Failed to instantiate router: ", err.Error())
 	}
 
-	// Start P2P (inter-node communication) HTTP Server and Client
-	StartClient(ctx, basin.Host)
-	err = StartP2pHttp(ctx, basin.Host)
-	if err != nil {
-		log.Fatal("Failed to instantiate P2P HTTP server: " + err.Error())
-	}
-
 	// Create new PubSub
 	_, err = StartPubSub(ctx, basin.Host)
 	if err != nil {

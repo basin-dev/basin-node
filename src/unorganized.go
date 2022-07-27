@@ -5,42 +5,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 
 	. "github.com/sestinj/basin-node/structs"
 	. "github.com/sestinj/basin-node/util"
 )
-
-func ReadResource(ctx context.Context, url string) ([]byte, error) {
-	// if Contains(*GetSources("producer"), url) {
-	// 	// Determine which adapter to use
-
-	// 	// This would also probably be the place to implement different guarantees?
-
-	// } else {
-	// 	// Use DNS/DHT to route to the node that produces this basin url
-
-	// 	// Call requestResource to the next hop
-	// }
-	pi, err := HostRouter.ResolvePeer(ctx, url)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err = P2pHttpClient.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, errors.New("Not yet implemented")
-}
-
-func WriteResource(ctx context.Context, url string, value []byte) error {
-	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
-	return errors.New("Not yet implemented")
-}
 
 // Working on making the metadata appear...
 func Register(ctx context.Context, manifestPath string) error {

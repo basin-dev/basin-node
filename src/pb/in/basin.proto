@@ -6,16 +6,17 @@ option go_package = "/pb";
 // Data that is included in every message
 message MessageData {
     string nodeId = 1; // ID of the sender libp2p node
+    string id = 2; // Unique ID of the message
 }
 
-message TestRequest {
+message ReadRequest {
     MessageData messageData = 1;
 
-    string message = 2;
+    string url = 2;
 }
 
-message TestResponse {
+message ReadResponse {
     MessageData messageData = 1;
 
-    string message = 2;
+    bytes data = 2;
 }

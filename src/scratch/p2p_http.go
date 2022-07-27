@@ -1,6 +1,7 @@
+/* Moved this file to scratch because we prob don't want the nodes communicating over HTTP when we can just as easily use the more efficient and reliable protobuf + libp2p streams */
 /* The nodes of our network communicate with each other over HTTP, through a different interface than the externally facing one defined in http_interface.go. This file contains both the client and server code. */
 
-package main
+package scratch
 
 import (
 	"context"
