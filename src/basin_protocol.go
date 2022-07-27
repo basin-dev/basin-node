@@ -24,8 +24,10 @@ type BasinNode struct {
 	ReadRequests map[string]*pb.ReadRequest
 }
 
-const ProtocolReadReq = "/basin/read/1.0.0"
-const ProtocolWriteReq = "/basin/write/1.0.0"
+const ProtocolReadReq = "/basin/readreq/1.0.0"
+const ProtocolReadRes = "/basin/readres/1.0.0"
+
+// TODO: ProtocolWriteReq/Res and associated handlers
 
 func StartBasinNode() (BasinNode, error) {
 	// Create listener on port
@@ -36,13 +38,13 @@ func StartBasinNode() (BasinNode, error) {
 		return basin, err
 	}
 
-	h.SetStreamHandler(ProtocolReadReq, basin.readHandler)
-	h.SetStreamHandler(ProtocolWriteReq, basin.writeHandler)
+	h.SetStreamHandler(ProtocolReadReq, basin.readReqHandler)
+	h.SetStreamHandler(ProtocolReadRes, basin.readResHandler)
 
 	return basin, nil
 }
 
-func (b *BasinNode) readHandler(s network.Stream) {
+func (b *BasinNode) readReqHandler(s network.Stream) {
 	defer s.Close()
 
 	log.Println("Recieved new read stream")
@@ -61,7 +63,8 @@ func (b *BasinNode) readHandler(s network.Stream) {
 
 	log.Println("Stream has requested the following URL: " + string(data.Url))
 
-	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String()}, Data: nil}
+	// Sends back the same MessageData.Id so the response can be identified
+	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: nil}
 
 	err = b.sendProtoMsg(s.Conn().RemotePeer(), s.Protocol(), resp)
 	if err != nil {
@@ -69,7 +72,39 @@ func (b *BasinNode) readHandler(s network.Stream) {
 	}
 }
 
-func (b *BasinNode) writeHandler(s network.Stream) {}
+func (b *BasinNode) readResHandler(s network.Stream) {
+	defer s.Close()
+
+	log.Println("New read response stream")
+
+	data := new(pb.ReadResponse)
+	buf, err := ioutil.ReadAll(s)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	err = proto.Unmarshal(buf, data)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	req, exists := b.ReadRequests[data.MessageData.Id]
+	if !exists {
+		return
+	}
+
+	// TODO Next: Pass the response to the request's channel
+
+}
+
+func (b *BasinNode) writeResHandler(s network.Stream) {
+	log.Fatal("Not yet implemented")
+}
+
+func (b *BasinNode) writeReqHandler(s network.Stream) {
+	log.Fatal("Not yet implemented")
+}
 
 func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) error {
 	s, err := b.Host.NewStream(context.Background(), id, p)
@@ -90,8 +125,8 @@ func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) 
 	return nil
 }
 
-func (b *BasinNode) NewMessageData() *pb.MessageData {
-	return &pb.MessageData{Id: uuid.New().String(), NodeId: peer.Encode(b.Host.ID())}
+func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
+	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
@@ -117,14 +152,14 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
 		// Big problem with using HTTP is you have to have the ip4 multiaddr protocol for the node. Missing out on a lot of opportunities.
 		// This is actually a huge problem, because not all nodes should have to have a domain, and their IP addresses will change, so the entry in the DHT will be outdated.
-		// req := &pb.ReadRequest{Url: url, MessageData: b.NewMessageData()}
+		req := &pb.ReadRequest{Url: url, MessageData: b.NewMessageData(uuid.New().String())}
 
-		// err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
+		if err != nil {
+			return nil, err
+		}
 
-		// b.ReadRequests[req.MessageData.Id] = req
+		b.ReadRequests[req.MessageData.Id] = req
 	}
 
 	return nil, errors.New("Not yet implemented")
