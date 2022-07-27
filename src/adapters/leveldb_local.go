@@ -14,23 +14,25 @@ type LevelDbLocalAdapter struct {
 	db *leveldb.DB
 }
 
-func (l LevelDbLocalAdapter) Read(url string) []byte {
+func (l LevelDbLocalAdapter) Read(url string) ([]byte, error) {
 
 	val, err := l.db.Get([]byte(url), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, err
 	}
 
-	return val
+	return val, nil
 }
 
-func (l LevelDbLocalAdapter) Write(url string, val []byte) bool {
+func (l LevelDbLocalAdapter) Write(url string, val []byte) error {
 	err := l.db.Put([]byte(url), val, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 
-	return true
+	return nil
 }
 
 func StartDB() (*leveldb.DB, error) {
