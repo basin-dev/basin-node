@@ -19,9 +19,14 @@ import (
 	. "github.com/sestinj/basin-node/util"
 )
 
+type ReadReqAnchor struct {
+	Req *pb.ReadRequest
+	Ch  chan *pb.ReadResponse
+}
+
 type BasinNode struct {
 	Host         host.Host
-	ReadRequests map[string]*pb.ReadRequest
+	ReadRequests map[string]*ReadReqAnchor
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
@@ -33,7 +38,7 @@ func StartBasinNode() (BasinNode, error) {
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
-	basin := BasinNode{Host: h, ReadRequests: map[string]*pb.ReadRequest{}}
+	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}}
 	if err != nil {
 		return basin, err
 	}
@@ -89,13 +94,13 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 		return
 	}
 
-	req, exists := b.ReadRequests[data.MessageData.Id]
+	anchor, exists := b.ReadRequests[data.MessageData.Id]
 	if !exists {
 		return
 	}
 
-	// TODO Next: Pass the response to the request's channel
-
+	anchor.Ch <- data
+	close(anchor.Ch)
 }
 
 func (b *BasinNode) writeResHandler(s network.Stream) {
@@ -129,21 +134,25 @@ func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
 	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
-func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
+func (b *BasinNode) ReadResource(ctx context.Context, url string) (chan<- []byte, error) {
+	valCh := make(chan<- []byte)
 	if Contains(*GetSources("producer"), url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
-		val, err := adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
+		resCh, err := adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		return val, nil
 
-		// This would also probably be the place to implement different guarantees?
+		go func() {
+			valCh <- resCh
+			close(valCh)
+		}()
 
+		return valCh, nil
 	} else {
-		// Use DNS/DHT to route to the node that produces this basin url
+		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
 		if err != nil {
 			return nil, err
@@ -159,10 +168,24 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 			return nil, err
 		}
 
-		b.ReadRequests[req.MessageData.Id] = req
-	}
+		resCh := make(chan *pb.ReadResponse)
 
-	return nil, errors.New("Not yet implemented")
+		anchor := &ReadReqAnchor{Req: req, Ch: resCh}
+
+		b.ReadRequests[req.MessageData.Id] = anchor
+
+		log.Println("Waiting for response to id " + req.MessageData.Id)
+
+		go func() {
+			// Wait for the response to come back through the channel. TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything)
+			res := <-resCh
+			log.Println("Recieved response for request id " + res.MessageData.Id)
+			valCh <- res.Data
+			close(valCh)
+		}()
+
+		return valCh, nil
+	}
 }
 
 func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
