@@ -33,13 +33,13 @@ func (l LevelDbLocalAdapter) Read(url string) chan ReadPromise {
 	return ch
 }
 
-func (l LevelDbLocalAdapter) Write(url string, val []byte) chan error {
+func (l LevelDbLocalAdapter) Write(url string, value []byte) chan error {
 	ch := make(chan error)
 
 	go func() {
 		defer close(ch)
 
-		err := l.db.Put([]byte(url), val, nil)
+		err := l.db.Put([]byte(url), value, nil)
 		if err != nil {
 			log.Println(err)
 		}

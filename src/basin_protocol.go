@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 
@@ -16,7 +16,9 @@ import (
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/sestinj/basin-node/adapters"
 	"github.com/sestinj/basin-node/pb"
+	. "github.com/sestinj/basin-node/structs"
 	. "github.com/sestinj/basin-node/util"
+	"golang.org/x/sync/errgroup"
 )
 
 type ReadReqAnchor struct {
@@ -134,28 +136,20 @@ func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
 	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
-func (b *BasinNode) ReadResource(ctx context.Context, url string) (chan<- []byte, error) {
-	valCh := make(chan<- []byte)
-	if Contains(*GetSources("producer"), url) {
+func (b *BasinNode) ReadResource(ctx context.Context, url string) chan adapters.ReadPromise {
+	if Contains(*b.GetSources(ctx, "producer"), url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
-		resCh, err := adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		go func() {
-			valCh <- resCh
-			close(valCh)
-		}()
-
-		return valCh, nil
+		return adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
 	} else {
+		ch := make(chan adapters.ReadPromise)
+		defer close(ch)
+
 		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
 		if err != nil {
-			return nil, err
+			ch <- adapters.ReadPromise{Data: nil, Err: err}
+			return ch
 		}
 
 		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
@@ -165,7 +159,8 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) (chan<- []byte
 
 		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
 		if err != nil {
-			return nil, err
+			ch <- adapters.ReadPromise{Data: nil, Err: err}
+			return ch
 		}
 
 		resCh := make(chan *pb.ReadResponse)
@@ -177,18 +172,290 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) (chan<- []byte
 		log.Println("Waiting for response to id " + req.MessageData.Id)
 
 		go func() {
+			defer close(resCh)
 			// Wait for the response to come back through the channel. TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything)
 			res := <-resCh
 			log.Println("Recieved response for request id " + res.MessageData.Id)
-			valCh <- res.Data
-			close(valCh)
+			ch <- adapters.ReadPromise{Data: res.Data, Err: nil}
 		}()
 
-		return valCh, nil
+		return ch
 	}
 }
 
-func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
+func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) chan error {
+	return adapters.MainAdapter.Write(url, value)
 	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
-	return errors.New("Not yet implemented")
+}
+
+// Working on making the metadata appear...
+func (b *BasinNode) Register(ctx context.Context, manifestPath string) chan error {
+	ch := make(chan error)
+	// A couple of todos for later...
+	// 1. TODO: Make sure did owns the domain
+	// 2. TODO: Check whether a schema already exists at this domain. If so, version it.
+	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
+	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
+
+	manifestRaw, err := ioutil.ReadFile(manifestPath)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+
+	manifest := new(ManifestJson)
+	err = json.Unmarshal(manifestRaw, manifest)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+
+	// TODO: First, check whether a manifest already exists (whether we are creating a new version or just registering for the first time)
+	// For now always assume that all registers are first time, and overwrite each other.
+
+	// PERMISSIONS
+	permUrl := GetMetadataUrl(manifest.Url, Permissions)
+	perms := []PermissionJson{}
+	if manifest.PublicRead {
+		// If public, then create a statement allowing all
+		// Otherwise, initial permissions are none
+		perm := PermissionJson{
+			Data: []string{},
+			Capabilities: []CapabilityJson{
+				CapabilityJson{
+					Action:     "read",
+					Expiration: "never",
+				},
+			},
+			Entities: []string{"*"},
+		}
+		perms = append(perms, perm)
+	}
+
+	permsRaw, err := json.Marshal(perms)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+
+	errCh := b.WriteResource(ctx, permUrl, permsRaw)
+	go func() {
+		err := <-errCh
+		ch <- err
+		close(ch)
+	}()
+
+	// SCHEMA
+	schemaUrl := GetMetadataUrl(manifest.Url, Schema)
+	schemaRaw, err := json.Marshal(manifest.Schema) // TODO: What is the shape of the schema?
+	errCh = b.WriteResource(ctx, schemaUrl, schemaRaw)
+	go func() {
+		err := <-errCh
+		ch <- err
+		close(ch)
+	}()
+
+	// MANIFEST
+	manifestUrl := GetMetadataUrl(manifest.Url, Manifest)
+	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
+	// This is when we want to start storing things as actual files? Just start thinking about it.
+	errCh = b.WriteResource(ctx, manifestUrl, manifestRaw)
+	go func() {
+		err := <-errCh
+		ch <- err
+		close(ch)
+	}()
+
+	// SOURCES
+	walletInfo := b.GetWalletInfo()
+	sourcesUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
+	currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
+	var srcs []string
+	err = json.Unmarshal(currSrcs, srcs)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+	srcs = append(srcs, manifest.Url)
+	finalSrcs, err := json.Marshal(srcs)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+	errCh = b.WriteResource(ctx, sourcesUrl, finalSrcs)
+	go func() {
+		err := <-errCh
+		ch <- err
+		close(ch)
+	}()
+
+	// Register with the routing table
+	err = HostRouter.RegisterUrl(ctx, manifest.Url)
+	if err != nil {
+		ch <- err
+		close(ch)
+		return ch
+	}
+
+	// Just like any other update - should tell subscribers (want a function for this)
+
+	return ch
+}
+
+func (b *BasinNode) GetWalletInfo() *WalletInfoJson {
+	data, err := LocalOnlyDb.Read("wallet")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return Unmarshal[WalletInfoJson](data)
+}
+
+func (b *BasinNode) GetPermissions(ctx context.Context, dataUrl string) chan struct {
+	Permission *[]PermissionJson
+	Err        error
+} {
+	ch := make(chan struct {
+		Permission *[]PermissionJson
+		Err        error
+	})
+	url := GetMetadataUrl(dataUrl, Permissions)
+	readCh := b.ReadResource(ctx, url)
+
+	go func() {
+		defer close(ch)
+		prm := <-readCh
+		ch <- struct {
+			Permission *[]PermissionJson
+			Err        error
+		}{Permission: Unmarshal[[]PermissionJson](prm.Data), Err: prm.Err} // TODO: This is pretty gross
+	}()
+
+	return ch
+}
+
+func (b *BasinNode) GetSchema(ctx context.Context, dataUrl string) chan struct {
+	Schema *SchemaJson
+	Err    error
+} {
+	ch := make(chan struct {
+		Schema *SchemaJson
+		Err    error
+	})
+	url := GetMetadataUrl(dataUrl, Schema)
+
+	readCh := b.ReadResource(ctx, url)
+	go func() {
+		defer close(ch)
+		prm := <-readCh
+		ch <- struct {
+			Schema *SchemaJson
+			Err    error
+		}{Schema: Unmarshal[SchemaJson](prm.Data), Err: prm.Err}
+	}()
+
+	return ch
+}
+
+func (b *BasinNode) GetSources(ctx context.Context, mode string) chan struct {
+	Sources *[]string
+	Err     error
+} {
+	ch := make(chan struct {
+		Sources *[]string
+		Err     error
+	})
+	walletInfo := b.GetWalletInfo()
+
+	url := GetUserDataUrl(walletInfo.Did, mode+".sources")
+	readCh := b.ReadResource(ctx, url)
+	go func() {
+		defer close(ch)
+		prm := <-readCh
+		ch <- struct {
+			Sources *[]string
+			Err     error
+		}{Sources: Unmarshal[[]string](prm.Data), Err: prm.Err}
+	}()
+
+	return ch
+}
+
+func (b *BasinNode) GetRequests(ctx context.Context, mode string) chan struct {
+	Requests *[]PermissionJson
+	Err      error
+} {
+	ch := make(chan struct {
+		Requests *[]PermissionJson
+		Err      error
+	})
+	walletInfo := b.GetWalletInfo()
+
+	url := GetUserDataUrl(walletInfo.Did, mode+".requests")
+	readCh := b.ReadResource(ctx, url)
+	go func() {
+		defer close(ch)
+		prm := <-readCh
+		ch <- struct {
+			Requests *[]PermissionJson
+			Err      error
+		}{Requests: Unmarshal[[]PermissionJson](prm.Data), Err: prm.Err}
+	}()
+
+	return ch
+}
+
+func (b *BasinNode) GetSchemas(ctx context.Context, mode string) chan struct {
+	Schemas *[]SchemaJson
+	Err     error
+} {
+	ch := make(chan struct {
+		Schemas *[]SchemaJson
+		Err     error
+	})
+	srcCh := b.GetSources(ctx, mode)
+
+	go func() {
+		defer close(ch)
+		srcs := <-srcCh
+		if srcs.Err != nil {
+			ch <- struct {
+				Schemas *[]SchemaJson
+				Err     error
+			}{Schemas: nil, Err: srcs.Err}
+			return
+		}
+
+		g, ctx := errgroup.WithContext(ctx)
+		var schemas []SchemaJson
+		for _, source := range *srcs.Sources {
+			g.Go(func() error {
+				schemaCh := b.GetSchema(ctx, source)
+				prm := <-schemaCh
+				if prm.Err != nil {
+					return prm.Err
+				}
+				schemas = append(schemas, *prm.Schema)
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			ch <- struct {
+				Schemas *[]SchemaJson
+				Err     error
+			}{Schemas: nil, Err: srcs.Err}
+			return
+		}
+	}()
+
+	return ch
+}
+
+func (b *BasinNode) RequestSubscription(ctx context.Context, url string) error {
+	return nil
 }

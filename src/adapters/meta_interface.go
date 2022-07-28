@@ -26,7 +26,9 @@ func (m MetaAdapter) Read(url string) chan ReadPromise {
 }
 
 func (m MetaAdapter) Write(url string, value []byte) chan error {
-	return nil
+	log.Println("NOT YET IMPLEMENTED")
+
+	return LocalAdapter.Write(url, value)
 }
 
 var MainAdapter = MetaAdapter{}

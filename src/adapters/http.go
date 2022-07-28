@@ -47,6 +47,12 @@ func (l HttpAdapter) Read(url string) chan ReadPromise {
 	return ch
 }
 
+// DELETE THIS do not use it, it's just here to quell errors before you get around to the Write func below
+type writeBody struct {
+	Url   string
+	Value []byte
+}
+
 func (l HttpAdapter) Write(url string, value []byte) chan error {
 	ch := make(chan error)
 

@@ -20,14 +20,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Data that is included in every message
+// Data that is included in every message; TODO: Include some more stuff: https://github.com/libp2p/go-libp2p/blob/master/examples/multipro/pb/p2p.proto
 type MessageData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"` // ID of the sender libp2p node
-	Id     string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`         // Unique ID of the message
+	Id     string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`         // Unique ID of the request/response pair or message, in order to match incoming response with previous request
 }
 
 func (x *MessageData) Reset() {

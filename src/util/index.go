@@ -63,7 +63,7 @@ func GetMetadataUrl(dataUrl string, prefix MetadataPrefix) string {
 }
 
 func GetUserDataUrl(did string, dataName string) string {
-	return "basin://" + did + ".basin." + dataName.String()
+	return "basin://" + did + ".basin." + dataName
 }
 
 // basin://com.natesesti.com.fb.firstname
