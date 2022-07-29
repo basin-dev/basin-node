@@ -18,3 +18,5 @@ natelocalnotes.txt
 # Python API for testing
 testing/env
 testing/__pycache__
+
+basin-node
