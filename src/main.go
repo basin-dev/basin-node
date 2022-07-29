@@ -9,9 +9,7 @@ import (
 	"github.com/sestinj/basin-node/util"
 )
 
-func main() {
-	ctx := context.Background()
-
+func StartEverything(ctx context.Context) {
 	// Start the BasinNode (libp2p host with associated protocol, stream handler)
 	basin, err := StartBasinNode()
 	if err != nil {
@@ -40,6 +38,12 @@ func main() {
 
 	// Start up this node's HTTP API, concurrently with CLI
 	go RunHttpServer(ctx, &basin)
+}
+
+func main() {
+	ctx := context.Background()
+
+	StartEverything(ctx)
 
 	// Run the CLI
 	cmd.Execute()
