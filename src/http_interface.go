@@ -34,7 +34,7 @@ type writeBody struct {
 	Value []byte
 }
 
-func RunHttpServer(ctx context.Context) {
+func RunHttpServer(ctx context.Context, b *BasinNode) {
 	listener, err := net.Listen("tcp", "127.0.0.1:5000")
 	if err != nil {
 		log.Fatal(err)
@@ -72,7 +72,7 @@ func RunHttpServer(ctx context.Context) {
 		}
 
 		// TODO: Then further marshal and validate value based on the schema
-		err = WriteResource(bodyjson.Url, bodyjson.Value)
+		err = b.WriteResource(ctx, bodyjson.Url, bodyjson.Value)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error writing to resource: " + err.Error()))
@@ -84,7 +84,7 @@ func RunHttpServer(ctx context.Context) {
 	})
 
 	handleAuth("/read", func(w http.ResponseWriter, r *http.Request) {
-		val, err := ReadResource(r.URL.Query().Get("url"))
+		val, err := b.ReadResource(ctx, r.URL.Query().Get("url"))
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error reading resource: " + err.Error()))

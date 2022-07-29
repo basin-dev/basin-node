@@ -39,7 +39,7 @@ func main() {
 	util.StartLocalOnlyDb(db, "/local/")
 
 	// Start up this node's HTTP API, concurrently with CLI
-	go RunHttpServer(ctx)
+	go RunHttpServer(ctx, &basin)
 
 	// Run the CLI
 	cmd.Execute()
