@@ -138,7 +138,17 @@ func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
 }
 
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
-	if Contains(*b.GetSources(ctx, "producer"), url) {
+	// Get list of sources on this node (can't call GetSources for infinite loop)
+	// TODO: Should be using something more efficient so we don't have to search over whole array
+	walletInfo := b.GetWalletInfo()
+	srcsUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
+	data, err := LocalOnlyDb.Read(srcsUrl)
+	if err != nil {
+		return nil, err
+	}
+	srcs := Unmarshal[[]string](data)
+
+	if Contains(*srcs, url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
 		return adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
@@ -309,7 +319,7 @@ func (b *BasinNode) GetSources(ctx context.Context, mode string) (*[]string, err
 	if err != nil {
 		return nil, err
 	}
-	// TODO: You've made an infinite loop with ReadResource and GetSources :(
+
 	return Unmarshal[[]string](val), nil
 }
 
