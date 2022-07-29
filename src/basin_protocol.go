@@ -96,6 +96,7 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 		return
 	}
 
+	// The reason we don't pass any errors through the channel is that the only errors occuring happen before we can get the channel.
 	anchor, exists := b.ReadRequests[data.MessageData.Id]
 	if !exists {
 		return
@@ -136,20 +137,17 @@ func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
 	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
-func (b *BasinNode) ReadResource(ctx context.Context, url string) chan adapters.ReadPromise {
+func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
 	if Contains(*b.GetSources(ctx, "producer"), url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
 		return adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
 	} else {
-		ch := make(chan adapters.ReadPromise)
-		defer close(ch)
-
 		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
 		if err != nil {
-			ch <- adapters.ReadPromise{Data: nil, Err: err}
-			return ch
+			log.Println(err)
+			return nil, err
 		}
 
 		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
@@ -159,38 +157,33 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) chan adapters.
 
 		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
 		if err != nil {
-			ch <- adapters.ReadPromise{Data: nil, Err: err}
-			return ch
+			log.Println(err)
+			return nil, err
 		}
 
 		resCh := make(chan *pb.ReadResponse)
+		defer close(resCh)
 
 		anchor := &ReadReqAnchor{Req: req, Ch: resCh}
-
 		b.ReadRequests[req.MessageData.Id] = anchor
-
 		log.Println("Waiting for response to id " + req.MessageData.Id)
 
-		go func() {
-			defer close(resCh)
-			// Wait for the response to come back through the channel. TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything)
-			res := <-resCh
-			log.Println("Recieved response for request id " + res.MessageData.Id)
-			ch <- adapters.ReadPromise{Data: res.Data, Err: nil}
-		}()
+		// Wait for the response to come back through the channel.
+		// TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
+		res := <-resCh
+		log.Println("Recieved response for request id " + res.MessageData.Id)
 
-		return ch
+		return res.Data, nil
 	}
 }
 
-func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) chan error {
+func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
 	return adapters.MainAdapter.Write(url, value)
 	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 }
 
 // Working on making the metadata appear...
-func (b *BasinNode) Register(ctx context.Context, manifestPath string) chan error {
-	ch := make(chan error)
+func (b *BasinNode) Register(ctx context.Context, manifestPath string) error {
 	// A couple of todos for later...
 	// 1. TODO: Make sure did owns the domain
 	// 2. TODO: Check whether a schema already exists at this domain. If so, version it.
@@ -199,21 +192,20 @@ func (b *BasinNode) Register(ctx context.Context, manifestPath string) chan erro
 
 	manifestRaw, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
 
 	manifest := new(ManifestJson)
 	err = json.Unmarshal(manifestRaw, manifest)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
 
 	// TODO: First, check whether a manifest already exists (whether we are creating a new version or just registering for the first time)
 	// For now always assume that all registers are first time, and overwrite each other.
+
+	// Run all the file writes in parallel
+	g, ctx := errgroup.WithContext(ctx)
 
 	// PERMISSIONS
 	permUrl := GetMetadataUrl(manifest.Url, Permissions)
@@ -236,38 +228,21 @@ func (b *BasinNode) Register(ctx context.Context, manifestPath string) chan erro
 
 	permsRaw, err := json.Marshal(perms)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
 
-	errCh := b.WriteResource(ctx, permUrl, permsRaw)
-	go func() {
-		err := <-errCh
-		ch <- err
-		close(ch)
-	}()
+	g.Go(func() error { return b.WriteResource(ctx, permUrl, permsRaw) })
 
 	// SCHEMA
 	schemaUrl := GetMetadataUrl(manifest.Url, Schema)
 	schemaRaw, err := json.Marshal(manifest.Schema) // TODO: What is the shape of the schema?
-	errCh = b.WriteResource(ctx, schemaUrl, schemaRaw)
-	go func() {
-		err := <-errCh
-		ch <- err
-		close(ch)
-	}()
+	g.Go(func() error { return b.WriteResource(ctx, schemaUrl, schemaRaw) })
 
 	// MANIFEST
 	manifestUrl := GetMetadataUrl(manifest.Url, Manifest)
 	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
 	// This is when we want to start storing things as actual files? Just start thinking about it.
-	errCh = b.WriteResource(ctx, manifestUrl, manifestRaw)
-	go func() {
-		err := <-errCh
-		ch <- err
-		close(ch)
-	}()
+	g.Go(func() error { return b.WriteResource(ctx, manifestUrl, manifestRaw) })
 
 	// SOURCES
 	walletInfo := b.GetWalletInfo()
@@ -276,35 +251,27 @@ func (b *BasinNode) Register(ctx context.Context, manifestPath string) chan erro
 	var srcs []string
 	err = json.Unmarshal(currSrcs, srcs)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
 	srcs = append(srcs, manifest.Url)
 	finalSrcs, err := json.Marshal(srcs)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
-	errCh = b.WriteResource(ctx, sourcesUrl, finalSrcs)
-	go func() {
-		err := <-errCh
-		ch <- err
-		close(ch)
-	}()
+	g.Go(func() error { return b.WriteResource(ctx, sourcesUrl, finalSrcs) })
 
 	// Register with the routing table
 	err = HostRouter.RegisterUrl(ctx, manifest.Url)
 	if err != nil {
-		ch <- err
-		close(ch)
-		return ch
+		return err
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
-	return ch
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *BasinNode) GetWalletInfo() *WalletInfoJson {
@@ -316,146 +283,76 @@ func (b *BasinNode) GetWalletInfo() *WalletInfoJson {
 	return Unmarshal[WalletInfoJson](data)
 }
 
-func (b *BasinNode) GetPermissions(ctx context.Context, dataUrl string) chan struct {
-	Permission *[]PermissionJson
-	Err        error
-} {
-	ch := make(chan struct {
-		Permission *[]PermissionJson
-		Err        error
-	})
+func (b *BasinNode) GetPermissions(ctx context.Context, dataUrl string) (*[]PermissionJson, error) {
 	url := GetMetadataUrl(dataUrl, Permissions)
-	readCh := b.ReadResource(ctx, url)
-
-	go func() {
-		defer close(ch)
-		prm := <-readCh
-		ch <- struct {
-			Permission *[]PermissionJson
-			Err        error
-		}{Permission: Unmarshal[[]PermissionJson](prm.Data), Err: prm.Err} // TODO: This is pretty gross
-	}()
-
-	return ch
+	val, err := b.ReadResource(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return Unmarshal[[]PermissionJson](val), nil
 }
 
-func (b *BasinNode) GetSchema(ctx context.Context, dataUrl string) chan struct {
-	Schema *SchemaJson
-	Err    error
-} {
-	ch := make(chan struct {
-		Schema *SchemaJson
-		Err    error
-	})
+func (b *BasinNode) GetSchema(ctx context.Context, dataUrl string) (*SchemaJson, error) {
 	url := GetMetadataUrl(dataUrl, Schema)
-
-	readCh := b.ReadResource(ctx, url)
-	go func() {
-		defer close(ch)
-		prm := <-readCh
-		ch <- struct {
-			Schema *SchemaJson
-			Err    error
-		}{Schema: Unmarshal[SchemaJson](prm.Data), Err: prm.Err}
-	}()
-
-	return ch
+	val, err := b.ReadResource(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return Unmarshal[SchemaJson](val), nil
 }
 
-func (b *BasinNode) GetSources(ctx context.Context, mode string) chan struct {
-	Sources *[]string
-	Err     error
-} {
-	ch := make(chan struct {
-		Sources *[]string
-		Err     error
-	})
+func (b *BasinNode) GetSources(ctx context.Context, mode string) (*[]string, error) {
 	walletInfo := b.GetWalletInfo()
 
 	url := GetUserDataUrl(walletInfo.Did, mode+".sources")
-	readCh := b.ReadResource(ctx, url)
-	go func() {
-		defer close(ch)
-		prm := <-readCh
-		ch <- struct {
-			Sources *[]string
-			Err     error
-		}{Sources: Unmarshal[[]string](prm.Data), Err: prm.Err}
-	}()
-
-	return ch
+	val, err := b.ReadResource(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: You've made an infinite loop with ReadResource and GetSources :(
+	return Unmarshal[[]string](val), nil
 }
 
-func (b *BasinNode) GetRequests(ctx context.Context, mode string) chan struct {
-	Requests *[]PermissionJson
-	Err      error
-} {
-	ch := make(chan struct {
-		Requests *[]PermissionJson
-		Err      error
-	})
+func (b *BasinNode) GetRequests(ctx context.Context, mode string) (*[]PermissionJson, error) {
 	walletInfo := b.GetWalletInfo()
 
 	url := GetUserDataUrl(walletInfo.Did, mode+".requests")
-	readCh := b.ReadResource(ctx, url)
-	go func() {
-		defer close(ch)
-		prm := <-readCh
-		ch <- struct {
-			Requests *[]PermissionJson
-			Err      error
-		}{Requests: Unmarshal[[]PermissionJson](prm.Data), Err: prm.Err}
-	}()
+	val, err := b.ReadResource(ctx, url)
+	if err != nil {
+		return nil, err
+	}
 
-	return ch
+	return Unmarshal[[]PermissionJson](val), nil
 }
 
-func (b *BasinNode) GetSchemas(ctx context.Context, mode string) chan struct {
-	Schemas *[]SchemaJson
-	Err     error
-} {
-	ch := make(chan struct {
-		Schemas *[]SchemaJson
-		Err     error
-	})
-	srcCh := b.GetSources(ctx, mode)
+func (b *BasinNode) GetSchemas(ctx context.Context, mode string) (*[]SchemaJson, error) {
+	srcs, err := b.GetSources(ctx, mode)
+	if err != nil {
+		return nil, err
+	}
 
-	go func() {
-		defer close(ch)
-		srcs := <-srcCh
-		if srcs.Err != nil {
-			ch <- struct {
-				Schemas *[]SchemaJson
-				Err     error
-			}{Schemas: nil, Err: srcs.Err}
-			return
-		}
+	var schemas []SchemaJson
+	g, ctx := errgroup.WithContext(ctx)
+	for _, source := range *srcs {
+		g.Go(func() error {
+			schema, err := b.GetSchema(ctx, source)
+			if err != nil {
+				return err
+			}
+			schemas = append(schemas, *schema)
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
 
-		g, ctx := errgroup.WithContext(ctx)
-		var schemas []SchemaJson
-		for _, source := range *srcs.Sources {
-			g.Go(func() error {
-				schemaCh := b.GetSchema(ctx, source)
-				prm := <-schemaCh
-				if prm.Err != nil {
-					return prm.Err
-				}
-				schemas = append(schemas, *prm.Schema)
-				return nil
-			})
-		}
-		if err := g.Wait(); err != nil {
-			ch <- struct {
-				Schemas *[]SchemaJson
-				Err     error
-			}{Schemas: nil, Err: srcs.Err}
-			return
-		}
-	}()
-
-	return ch
+	return &schemas, nil
 }
 
 func (b *BasinNode) RequestSubscription(ctx context.Context, url string) error {
 	return nil
 }
+
+// TODO: Realized I have the channel pattern inside out: want to allow the function to take time (doesn't need to return channel immediately) and t
+// hen turn it into a goroutine in the calling function if needed. This is the more flexible way, and much less verbose. Will clean soon"

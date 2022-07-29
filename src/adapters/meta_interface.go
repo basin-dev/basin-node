@@ -14,18 +14,13 @@ type Adapter interface {
 
 type MetaAdapter struct{}
 
-type ReadPromise struct {
-	Data []byte
-	Err  error
-}
-
-func (m MetaAdapter) Read(url string) chan ReadPromise {
+func (m MetaAdapter) Read(url string) ([]byte, error) {
 	log.Println("NOT YET IMPLEMENTED")
 
 	return LocalAdapter.Read(url)
 }
 
-func (m MetaAdapter) Write(url string, value []byte) chan error {
+func (m MetaAdapter) Write(url string, value []byte) error {
 	log.Println("NOT YET IMPLEMENTED")
 
 	return LocalAdapter.Write(url, value)

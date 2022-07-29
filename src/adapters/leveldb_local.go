@@ -14,39 +14,23 @@ type LevelDbLocalAdapter struct {
 	db *leveldb.DB
 }
 
-func (l LevelDbLocalAdapter) Read(url string) chan ReadPromise {
-	ch := make(chan ReadPromise)
+func (l LevelDbLocalAdapter) Read(url string) ([]byte, error) {
+	val, err := l.db.Get([]byte(url), nil)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-	go func() {
-		defer close(ch)
-
-		val, err := l.db.Get([]byte(url), nil)
-		if err != nil {
-			log.Println(err)
-			ch <- ReadPromise{Data: val, Err: err}
-			return
-		}
-
-		ch <- ReadPromise{Data: val, Err: nil}
-	}()
-
-	return ch
+	return val, nil
 }
 
-func (l LevelDbLocalAdapter) Write(url string, value []byte) chan error {
-	ch := make(chan error)
+func (l LevelDbLocalAdapter) Write(url string, value []byte) error {
+	err := l.db.Put([]byte(url), value, nil)
+	if err != nil {
+		log.Println(err)
+	}
 
-	go func() {
-		defer close(ch)
-
-		err := l.db.Put([]byte(url), value, nil)
-		if err != nil {
-			log.Println(err)
-		}
-		ch <- err
-	}()
-
-	return ch
+	return err
 }
 
 func StartDB() (*leveldb.DB, error) {
