@@ -7,6 +7,8 @@ option go_package = "/pb";
 message MessageData {
     string nodeId = 1; // ID of the sender libp2p node
     string id = 2; // Unique ID of the request/response pair or message, in order to match incoming response with previous request
+    bytes sig = 3; // Signature of the data contained in this message by the did sending the message
+    string did = 4; // DID which has sent and signed the message
 }
 
 message ReadRequest {

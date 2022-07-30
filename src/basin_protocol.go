@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	ggio "github.com/gogo/protobuf/io"
 	"github.com/gogo/protobuf/proto"
@@ -15,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/sestinj/basin-node/adapters"
+	didutil "github.com/sestinj/basin-node/did"
 	"github.com/sestinj/basin-node/pb"
 	. "github.com/sestinj/basin-node/structs"
 	. "github.com/sestinj/basin-node/util"
@@ -29,6 +33,8 @@ type ReadReqAnchor struct {
 type BasinNode struct {
 	Host         host.Host
 	ReadRequests map[string]*ReadReqAnchor
+	Did          string
+	PrivKey      ed25519.PrivateKey
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
@@ -49,6 +55,18 @@ func StartBasinNode() (BasinNode, error) {
 	h.SetStreamHandler(ProtocolReadRes, basin.readResHandler)
 
 	return basin, nil
+}
+
+/* Sets the given DID and private key to be the current signer for the node */
+// TODO: We eventually want the node to be multi-tenant
+func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
+	priv, err := didutil.ReadKeystore(did, pw)
+	if err != nil {
+		return err
+	}
+	b.PrivKey = priv
+	b.Did = did
+	return nil
 }
 
 func (b *BasinNode) readReqHandler(s network.Stream) {
@@ -72,6 +90,11 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	// Sends back the same MessageData.Id so the response can be identified
 	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: nil}
+	sig, err := b.signProtoMsg(resp)
+	if err != nil {
+		log.Println(err)
+	}
+	resp.MessageData.Sig = sig
 
 	err = b.sendProtoMsg(s.Conn().RemotePeer(), s.Protocol(), resp)
 	if err != nil {
@@ -90,6 +113,7 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 		log.Println(err)
 		return
 	}
+	// TODO: Make a utility function to both unmarshal the buffer to a pointer of data and verify the signature in MessageData
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
 		log.Println(err)
@@ -114,6 +138,36 @@ func (b *BasinNode) writeReqHandler(s network.Stream) {
 	log.Fatal("Not yet implemented")
 }
 
+/* Use the node's current private key to sign the message data and return the signature */
+func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {
+	digest, err := proto.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	sig, err := b.PrivKey.Sign(rand.Reader, digest, nil)
+	if err != nil {
+		return nil, err
+	}
+	return sig, nil
+}
+
+/* Verify that the signed message was signed by the DID specified in the MessageData */
+func verifyMessage(msg proto.Message, msgData *pb.MessageData) bool {
+	// Must set this to nil because it is nil when the message is signed
+	sig := msgData.Sig
+	msgData.Sig = nil
+
+	raw, err := proto.Marshal(msg)
+	if err != nil {
+		log.Println("Failed to unmarshal proto message.")
+		return false
+	}
+	msgData.Sig = sig
+	pub := []byte(strings.Replace(msgData.Did, "did:key:", "", 1))
+	return ed25519.Verify(pub, raw, sig)
+}
+
+/* Create a new stream with specified peer and write the protobuf message to the stream under given protocol */
 func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) error {
 	s, err := b.Host.NewStream(context.Background(), id, p)
 	if err != nil {
@@ -133,10 +187,12 @@ func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) 
 	return nil
 }
 
+/* Create new metadata struct for protobuf message */
 func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
 	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
+/* The uniform interface for retrieving any Basin resource, local or remote */
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
 	// Get list of sources on this node (can't call GetSources for infinite loop)
 	// TODO: Should be using something more efficient so we don't have to search over whole array
@@ -164,6 +220,11 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		// Big problem with using HTTP is you have to have the ip4 multiaddr protocol for the node. Missing out on a lot of opportunities.
 		// This is actually a huge problem, because not all nodes should have to have a domain, and their IP addresses will change, so the entry in the DHT will be outdated.
 		req := &pb.ReadRequest{Url: url, MessageData: b.NewMessageData(uuid.New().String())}
+		sig, err := b.signProtoMsg(req)
+		if err != nil {
+			log.Println(err)
+		}
+		req.MessageData.Sig = sig
 
 		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
 		if err != nil {
@@ -187,6 +248,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 	}
 }
 
+/* The uniform interface for writing to any Basin resource, local or remote */
 func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
 	return adapters.MainAdapter.Write(url, value)
 	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
