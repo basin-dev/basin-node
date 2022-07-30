@@ -1,4 +1,5 @@
 ![](docs/green.png)
+![](docs/basin.png)
 
 # Basin Node Development
 
