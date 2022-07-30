@@ -1,3 +1,5 @@
+![](testing/green.png)
+
 Ensure you have Python 3.9:
 ```
 python3 --version
