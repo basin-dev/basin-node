@@ -67,7 +67,6 @@ func DidFilename(did string) string {
 	return KEYSTORE_PATH + strings.ReplaceAll(did, ":", "_") + ".pem"
 }
 
-// TODO: You're not even using the password to encrypt here!!! >:()
 func WriteKeystore(did string, priv ed25519.PrivateKey, pw string) error {
 	file, err := os.Create(DidFilename(did))
 	defer file.Close()
@@ -80,9 +79,9 @@ func WriteKeystore(did string, priv ed25519.PrivateKey, pw string) error {
 		return err
 	}
 
-	block := &pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: bytes,
+	block, err := x509.EncryptPEMBlock(rand.Reader, "PRIVATE KEY", bytes, []byte(pw), x509.PEMCipher3DES)
+	if err != nil {
+		return err
 	}
 
 	_, err = file.Write(pem.EncodeToMemory(block))
@@ -99,12 +98,13 @@ func ReadKeystore(did string, pw string) (ed25519.PrivateKey, error) {
 		return nil, err
 	}
 
-	p, _ := pem.Decode(data)
-	if p == nil {
+	block, _ := pem.Decode(data)
+	if block == nil {
 		return nil, errors.New(".pem file contained no blocks")
 	}
 
-	priv, err := x509.ParsePKCS8PrivateKey(p.Bytes)
+	privRaw, err := x509.DecryptPEMBlock(block, []byte(pw))
+	priv, err := x509.ParsePKCS8PrivateKey(privRaw)
 	if err != nil {
 		return nil, err
 	}
