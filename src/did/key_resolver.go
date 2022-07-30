@@ -125,9 +125,3 @@ func (k KeyResolver) Resolve(did string) ([]byte, error) {
 
 	return doc, nil
 }
-
-func CreateKeyDid() (pub string, priv string) {
-	pub = ""
-	priv = ""
-	return
-}
