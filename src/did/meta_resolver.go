@@ -7,6 +7,7 @@ import (
 )
 
 type Resolver interface {
+	/* Takes a DID string, resolves with the given method, and returns []byte which can be unmarshaled to the DID document */
 	Resolve(did string) ([]byte, error)
 }
 
