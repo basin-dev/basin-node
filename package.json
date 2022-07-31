@@ -1,6 +1,7 @@
 {
   "scripts": {
     "build:schemas": "gojsonschema -p main schemas/permission.json > src/permission.go",
-    "update": "cd src && go get -u && go mod tidy"
+    "update": "cd src && go get -u && go mod tidy",
+    "build:proto": "cd src && protoc -I=pb --go_out=. pb/in/basin.proto"
   }
 }
