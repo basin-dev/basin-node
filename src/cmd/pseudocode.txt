@@ -1,0 +1,65 @@
+# Functions needed for register and modify commands
+
+# Idea #1
+# Use same methods for register and modify CLI commands?
+# If URL does not exist, then create the Basin resource
+# If URL does exist, then update with new JSON file
+# For now, you won't be able to remove Basin URLs
+# You will only be able to null its metadata
+
+func SetWalletInfo(wallet WalletInfoJson)
+ 
+func SetPermissions(dataUrl string, permissions PermissionJson)
+
+func SetSchema(dataURL string, schema SchemaJson)
+
+func SetSource(dataURL string)
+
+func SetRequest(dataURL string, permissions PermissionJson)
+
+# Idea #2
+# But pausing this for a moment...
+# So many open questions...
+# UX of CLI for Idea #1 is terrible
+# e.g. You need to edit JSON files and then pass them around?
+# In that case, for v1, should we just have a CLI command for grabbing the latest
+# metadata files from the node, which will just be added to a directory
+# And then if people want to modify them, they can edit the files
+# If they want to add new Basin resources, they can just add JSON files
+# This seems better than this command based approach
+
+# e.g. the commands would be...
+# `basin-node metadata pull` (or we could just have the leveldb always write updates to files)
+# `basin-node metadata push` (or we could just have the leveldb always read changes to files)
+# and then the directory structure would be like
+# Metadata
+# -- WalletInfo
+# ---- WalletInfo.json
+# -- Consumer
+# ---- Requests
+# ------ outstanding-requests.json
+# ---- Basin URLs
+# ------ consumer-basin-urls.json
+# ------ basin-url-1
+# -------- basin-url-1-permissions.json
+# -------- basin-url-1-schema.json
+# ------ basin-url-2
+# -------- basin-url-2-permissions.json
+# -------- basin-url-2-schema.json
+# ------ basin-url-3
+# -------- basin-url-2-permissions.json
+# -------- basin-url-2-schema.json
+# -- Producer
+# ---- Requests
+# ------ outstanding-requests.json
+# ---- Basin URLs
+# ------ producer-basin-urls.json
+# ------ basin-url-4
+# -------- basin-url-4-permissions.json
+# -------- basin-url-4-schema.json
+# ------ basin-url-5
+# -------- basin-url-5-permissions.json
+# -------- basin-url-5-schema.json
+# ------ basin-url-6
+# -------- basin-url-6-permissions.json
+# -------- basin-url-6-schema.json
