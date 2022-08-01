@@ -42,7 +42,7 @@ const ProtocolReadRes = "/basin/readres/1.0.0"
 
 // TODO: ProtocolWriteReq/Res and associated handlers
 
-func StartBasinNode() (BasinNode, error) {
+func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
@@ -53,6 +53,8 @@ func StartBasinNode() (BasinNode, error) {
 
 	h.SetStreamHandler(ProtocolReadReq, basin.readReqHandler)
 	h.SetStreamHandler(ProtocolReadRes, basin.readResHandler)
+
+	basin.LoadPrivateKey(config.Did, config.Pw)
 
 	return basin, nil
 }

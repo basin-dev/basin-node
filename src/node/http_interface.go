@@ -34,8 +34,9 @@ type writeBody struct {
 	Value []byte
 }
 
-func RunHttpServer(ctx context.Context, b *BasinNode) {
-	listener, err := net.Listen("tcp", "127.0.0.1:5000")
+func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
+	// TODO: This is where you can use net.Listen("unix") or something for alternate RPC communication
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
