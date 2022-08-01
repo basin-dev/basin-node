@@ -131,94 +131,79 @@ func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte)
 }
 
 // Working on making the metadata appear...
-func (b *BasinNode) Register(ctx context.Context, manifestPath string) error {
+func (b *BasinNode) Register(ctx context.Context, url string, adapterPath string, permissionsPath string, schemaPath string) error {
 	// A couple of todos for later...
 	// 1. TODO: Make sure did owns the domain
 	// 2. TODO: Check whether a schema already exists at this domain. If so, version it.
 	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
 	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
 
-	manifestRaw, err := ioutil.ReadFile(manifestPath)
-	if err != nil {
-		return err
-	}
-
-	manifest := new(ManifestJson)
-	err = json.Unmarshal(manifestRaw, manifest)
-	if err != nil {
-		return err
-	}
-
-	// TODO: First, check whether a manifest already exists (whether we are creating a new version or just registering for the first time)
-	// For now always assume that all registers are first time, and overwrite each other.
+	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
+	// This is when we want to start storing things as actual files? Just start thinking about it.
 
 	// Run all the file writes in parallel
 	g, ctx := errgroup.WithContext(ctx)
 
-	// PERMISSIONS
-	permUrl := GetMetadataUrl(manifest.Url, Permissions)
-	perms := []PermissionJson{}
-	if manifest.PublicRead {
-		// If public, then create a statement allowing all
-		// Otherwise, initial permissions are none
-		perm := PermissionJson{
-			Data: []string{},
-			Capabilities: []CapabilityJson{
-				CapabilityJson{
-					Action:     "read",
-					Expiration: "never",
-				},
-			},
-			Entities: []string{"*"},
-		}
-		perms = append(perms, perm)
-	}
-
-	permsRaw, err := json.Marshal(perms)
-	if err != nil {
-		return err
-	}
-
-	g.Go(func() error { return b.WriteResource(ctx, permUrl, permsRaw) })
-
 	// SCHEMA
-	schemaUrl := GetMetadataUrl(manifest.Url, Schema)
-	schemaRaw, err := json.Marshal(manifest.Schema) // TODO: What is the shape of the schema?
-	g.Go(func() error { return b.WriteResource(ctx, schemaUrl, schemaRaw) })
+	schemaUrl := GetMetadataUrl(url, Schema)
+	g.Go(func() error {
+		schemaRaw, err := ioutil.ReadFile(schemaPath)
+		if err != nil {
+			return err
+		}
+		return b.WriteResource(ctx, schemaUrl, schemaRaw)
+	})
 
-	// MANIFEST
-	manifestUrl := GetMetadataUrl(manifest.Url, Manifest)
-	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
-	// This is when we want to start storing things as actual files? Just start thinking about it.
-	g.Go(func() error { return b.WriteResource(ctx, manifestUrl, manifestRaw) })
+	// PERMISSIONS
+	permUrl := GetMetadataUrl(url, Permissions)
+	g.Go(func() error {
+		permRaw, err := ioutil.ReadFile(permissionsPath)
+		if err != nil {
+			return err
+		}
+		return b.WriteResource(ctx, permUrl, permRaw)
+	})
+
+	// ADAPTER CONFIG
+	adpUrl := GetMetadataUrl(url, Adapter)
+	g.Go(func() error {
+		adpRaw, err := ioutil.ReadFile(adapterPath)
+		if err != nil {
+			return err
+		}
+		return b.WriteResource(ctx, adpUrl, adpRaw)
+	})
 
 	// SOURCES
 	walletInfo := b.GetWalletInfo()
 	sourcesUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
-	currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
-	var srcs []string
-	err = json.Unmarshal(currSrcs, srcs)
-	if err != nil {
+	g.Go(func() error {
+		currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
+		var srcs []string
+		err = json.Unmarshal(currSrcs, srcs)
+		if err != nil {
+			return err
+		}
+		srcs = append(srcs, url)
+		finalSrcs, err := json.Marshal(srcs)
+		if err != nil {
+			return err
+		}
+		return b.WriteResource(ctx, sourcesUrl, finalSrcs)
+	})
+
+	if err := g.Wait(); err != nil {
 		return err
 	}
-	srcs = append(srcs, manifest.Url)
-	finalSrcs, err := json.Marshal(srcs)
-	if err != nil {
-		return err
-	}
-	g.Go(func() error { return b.WriteResource(ctx, sourcesUrl, finalSrcs) })
 
 	// Register with the routing table
-	err = HostRouter.RegisterUrl(ctx, manifest.Url)
+	err := HostRouter.RegisterUrl(ctx, url)
 	if err != nil {
 		return err
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
-	if err := g.Wait(); err != nil {
-		return err
-	}
 	return nil
 }
 
