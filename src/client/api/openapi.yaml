@@ -1,0 +1,67 @@
+openapi: 3.0.2
+info:
+  contact:
+    email: sestinj@gmail.com
+  description: Basin RPC API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://github.com/sestinj/basin-node
+  title: Basin RPC API
+  version: 1.0.11
+externalDocs:
+  description: Find out more about Basin
+  url: https://github.com/sestinj/basin-node
+servers:
+- url: /api/v3
+paths:
+  /write:
+    put:
+      description: Write Basin resource
+      operationId: write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        description: Write Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Write Basin resource
+  /read:
+    get:
+      description: Read Basin resource
+      operationId: read
+      parameters:
+      - description: URL of Basin resource
+        explode: true
+        in: query
+        name: url
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: successful operation
+        "400":
+          description: Error
+      summary: Read Basin resource
+components:
+  schemas: {}

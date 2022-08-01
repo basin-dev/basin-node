@@ -2,6 +2,11 @@
   "scripts": {
     "build:schemas": "gojsonschema -p main schemas/permission.json > src/permission.go",
     "update": "cd src && go get -u && go mod tidy",
-    "build:proto": "cd src && protoc -I=pb --go_out=. pb/in/basin.proto"
+    "build:proto": "cd src && protoc -I=pb --go_out=. pb/in/basin.proto",
+    "gen:client": "rm -rf src/client && npx @openapitools/openapi-generator-cli generate -i openapi.yaml -g go -o ./src/client/ -c openapiConfigClient.json && rm ./src/client/go.mod ./src/client/go.sum",
+    "gen:server": "rm -rf src/server && npx @openapitools/openapi-generator-cli generate -i openapi.yaml -g go-server -o ./src/server/ -c openapiConfigServer.json"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.5.1"
   }
 }

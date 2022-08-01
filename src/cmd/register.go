@@ -10,6 +10,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sestinj/basin-node/client"
 )
 
 // registerCmd represents the register command
@@ -21,13 +23,18 @@ var registerCmd = &cobra.Command{
 	- permissions
 	- schema`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if !interactive {
+			fmt.Fprintln(os.Stderr, "This command can only be run in interactive mode. Use `basin attach` first.")
+		}
 		adapter, err := cmd.Flags().GetString("adapter")
-		permissions, err = cmd.Flags().GetString("permissions")
-		schema, err = cmd.Flags().GetString("schema")
+		permissions, err := cmd.Flags().GetString("permissions")
+		schema, err := cmd.Flags().GetString("schema")
 		url := args[0]
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not parse flags: %s", err.Error())
 		}
+
+		var _ client.APIClient
 
 		err = Register(context.Background(), url, adapter, permissions, schema)
 		if err != nil {
