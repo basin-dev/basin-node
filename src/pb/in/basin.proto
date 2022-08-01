@@ -22,3 +22,19 @@ message ReadResponse {
 
     bytes data = 2;
 }
+
+message Capability {
+    string action = 1;
+    string expiration = 2;
+}
+
+message SubscriptionRequest {
+    MessageData messageData = 1;
+
+    string Url = 2;
+    repeated Capability capabilities = 3;
+}
+
+message SubscriptionResponse {
+    MessageData messageData = 1;
+}

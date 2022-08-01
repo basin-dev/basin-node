@@ -7,6 +7,7 @@ const (
 	Royalties
 	Schema
 	Manifest
+	Sources
 )
 
 func (m MetadataPrefix) String() string {

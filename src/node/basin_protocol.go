@@ -3,20 +3,13 @@ package node
 import (
 	"context"
 	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"strings"
 
-	ggio "github.com/gogo/protobuf/io"
-	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/sestinj/basin-node/adapters"
 	didutil "github.com/sestinj/basin-node/did"
 	"github.com/sestinj/basin-node/pb"
@@ -39,6 +32,8 @@ type BasinNode struct {
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
 const ProtocolReadRes = "/basin/readres/1.0.0"
+const ProtocolSubReq = "/basin/subreq/1.0.0"
+const ProtocolSubRes = "/basin/subres/1.0.0"
 
 // TODO: ProtocolWriteReq/Res and associated handlers
 
@@ -53,6 +48,8 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 
 	h.SetStreamHandler(ProtocolReadReq, basin.readReqHandler)
 	h.SetStreamHandler(ProtocolReadRes, basin.readResHandler)
+	h.SetStreamHandler(ProtocolSubRes, basin.subResHandler)
+	h.SetStreamHandler(ProtocolSubReq, basin.subReqHandler)
 
 	basin.LoadPrivateKey(config.Did, config.Pw)
 
@@ -69,129 +66,6 @@ func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 	b.PrivKey = priv
 	b.Did = did
 	return nil
-}
-
-func (b *BasinNode) readReqHandler(s network.Stream) {
-	defer s.Close()
-
-	log.Println("Recieved new read stream")
-
-	data := new(pb.ReadRequest)
-	buf, err := ioutil.ReadAll(s)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	err = proto.Unmarshal(buf, data)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	log.Println("Stream has requested the following URL: " + string(data.Url))
-
-	// Sends back the same MessageData.Id so the response can be identified
-	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: nil}
-	sig, err := b.signProtoMsg(resp)
-	if err != nil {
-		log.Println(err)
-	}
-	resp.MessageData.Sig = sig
-
-	err = b.sendProtoMsg(s.Conn().RemotePeer(), s.Protocol(), resp)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func (b *BasinNode) readResHandler(s network.Stream) {
-	defer s.Close()
-
-	log.Println("New read response stream")
-
-	data := new(pb.ReadResponse)
-	buf, err := ioutil.ReadAll(s)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	// TODO: Make a utility function to both unmarshal the buffer to a pointer of data and verify the signature in MessageData
-	err = proto.Unmarshal(buf, data)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	// The reason we don't pass any errors through the channel is that the only errors occuring happen before we can get the channel.
-	anchor, exists := b.ReadRequests[data.MessageData.Id]
-	if !exists {
-		return
-	}
-
-	anchor.Ch <- data
-	close(anchor.Ch)
-}
-
-func (b *BasinNode) writeResHandler(s network.Stream) {
-	log.Fatal("Not yet implemented")
-}
-
-func (b *BasinNode) writeReqHandler(s network.Stream) {
-	log.Fatal("Not yet implemented")
-}
-
-/* Use the node's current private key to sign the message data and return the signature */
-func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {
-	digest, err := proto.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	sig, err := b.PrivKey.Sign(rand.Reader, digest, nil)
-	if err != nil {
-		return nil, err
-	}
-	return sig, nil
-}
-
-/* Verify that the signed message was signed by the DID specified in the MessageData */
-func verifyMessage(msg proto.Message, msgData *pb.MessageData) bool {
-	// Must set this to nil because it is nil when the message is signed
-	sig := msgData.Sig
-	msgData.Sig = nil
-
-	raw, err := proto.Marshal(msg)
-	if err != nil {
-		log.Println("Failed to unmarshal proto message.")
-		return false
-	}
-	msgData.Sig = sig
-	pub := []byte(strings.Replace(msgData.Did, "did:key:", "", 1))
-	return ed25519.Verify(pub, raw, sig)
-}
-
-/* Create a new stream with specified peer and write the protobuf message to the stream under given protocol */
-func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) error {
-	s, err := b.Host.NewStream(context.Background(), id, p)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	defer s.Close()
-
-	writer := ggio.NewFullWriter(s)
-	err = writer.WriteMsg(data)
-	if err != nil {
-		log.Println(err)
-		s.Reset()
-		return err
-	}
-
-	return nil
-}
-
-/* Create new metadata struct for protobuf message */
-func (b *BasinNode) NewMessageData(id string) *pb.MessageData {
-	return &pb.MessageData{Id: id, NodeId: peer.Encode(b.Host.ID())}
 }
 
 /* The uniform interface for retrieving any Basin resource, local or remote */
@@ -221,7 +95,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
 		// Big problem with using HTTP is you have to have the ip4 multiaddr protocol for the node. Missing out on a lot of opportunities.
 		// This is actually a huge problem, because not all nodes should have to have a domain, and their IP addresses will change, so the entry in the DHT will be outdated.
-		req := &pb.ReadRequest{Url: url, MessageData: b.NewMessageData(uuid.New().String())}
+		req := &pb.ReadRequest{Url: url, MessageData: b.newMessageData(uuid.New().String())}
 		sig, err := b.signProtoMsg(req)
 		if err != nil {
 			log.Println(err)
@@ -423,10 +297,3 @@ func (b *BasinNode) GetSchemas(ctx context.Context, mode string) (*[]SchemaJson,
 
 	return &schemas, nil
 }
-
-func (b *BasinNode) RequestSubscription(ctx context.Context, url string) error {
-	return nil
-}
-
-// TODO: Realized I have the channel pattern inside out: want to allow the function to take time (doesn't need to return channel immediately) and t
-// hen turn it into a goroutine in the calling function if needed. This is the more flexible way, and much less verbose. Will clean soon"

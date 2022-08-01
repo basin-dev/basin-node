@@ -7,6 +7,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+
+	. "github.com/sestinj/basin-node/structs"
+	"github.com/sestinj/basin-node/util"
 )
 
 /*
@@ -50,8 +53,17 @@ func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
 	handleAuth("/requestSubscription", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "POST":
-			w.WriteHeader(500)
-			w.Write([]byte("Not yet implemented"))
+			var body []PermissionJson
+			err := json.NewDecoder(r.Body).Decode(&body)
+			url := util.GetUserDataUrl(b.Did, "producer.requests")
+			val, err := json.Marshal(body)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			err = b.WriteResource(ctx, url, val)
+			w.WriteHeader(200)
+			w.Write([]byte("Request was recieved successfully"))
 		default:
 			w.WriteHeader(400)
 			w.Write([]byte("Invalid method, " + r.Method))
