@@ -1,6 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2022 Basin authors@basin.dev
 */
 package cmd
 
@@ -21,22 +20,40 @@ var modifyCmd = &cobra.Command{
 	- schemas
 	- cache
 	- wallet
-	as a consumer, producer, or user.`,
+	as a consumer or producer.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("modify called")
+
+		mode, _ := cmd.Flags().GetString("mode")
+		entity, _ := cmd.Flags().GetString("entity")
+
+		switch mode {
+		case "consumer":
+			switch entity {
+			case "sources":
+				fmt.Println("modify in consumer mode called with sources entity")
+			default:
+				fmt.Println("error: modify in consumer mode must be called with sources entity")
+			}
+		case "producer":
+			switch entity {
+			case "sources":
+				fmt.Println("modify in producer mode called with sources entity")
+			default:
+				fmt.Println("error: modify in producer mode must be called with sources entity")
+			}
+		default:
+			fmt.Println("error: modify must be called in either consumer or producer mode with sources entity.")
+		}
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(modifyCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// modifyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// modifyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	modifyCmd.PersistentFlags().StringP("mode", "m", "", "consumer or producer mode")
+	modifyCmd.MarkPersistentFlagRequired("mode")
+	modifyCmd.PersistentFlags().StringP("entity", "e", "", "entities (e.g. sources)")
+	modifyCmd.MarkPersistentFlagRequired("entity")
+	// https://github.com/spf13/cobra/blob/main/user_guide.md#flag-groups
+	// rootCmd.MarkFlagsRequiredTogether("username", "password")
 }
