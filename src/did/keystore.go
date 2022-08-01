@@ -97,7 +97,6 @@ func WriteKeystore(did string, priv ed25519.PrivateKey, pw string) error {
 func ReadKeystore(did string, pw string) (ed25519.PrivateKey, error) {
 	data, err := os.ReadFile(DidFilename(did))
 	if err != nil {
-		fmt.Println("Couldn't read the file")
 		return nil, err
 	}
 

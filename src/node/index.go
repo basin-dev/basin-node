@@ -48,5 +48,5 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 	util.StartLocalOnlyDb(db, "/local/")
 
 	// Start up this node's HTTP API, concurrently with CLI
-	go RunHttpServer(ctx, &basin, config.Http)
+	RunHttpServer(ctx, &basin, config.Http)
 }

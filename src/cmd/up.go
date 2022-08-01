@@ -50,5 +50,7 @@ func init() {
 	upCmd.Flags().String("http", "", "Set the URL from which to host the node's HTTP interface.")
 	upCmd.Flags().String("did", "", "Set the default signing DID for the node.")
 	upCmd.Flags().String("pw", "", "Enter the password to decrypt the keystore file for the given DID")
+	upCmd.MarkFlagRequired("did")
+	upCmd.MarkFlagRequired("pw")
 	upCmd.MarkFlagsRequiredTogether("did", "pw")
 }
