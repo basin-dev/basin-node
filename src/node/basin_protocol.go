@@ -149,6 +149,8 @@ func marshalToJson[T any](filepath string) ([]byte, error) {
 		err = json.Unmarshal(raw, &t)
 	case "yaml":
 		err = yaml.Unmarshal(raw, &t)
+	case "yml":
+		err = yaml.Unmarshal(raw, &t)
 	default:
 		return nil, errors.New("Cannot parse filetype: " + segs[len(segs)-1])
 	}
