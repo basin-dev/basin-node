@@ -6,6 +6,7 @@ import (
 
 	adapters "github.com/sestinj/basin-node/adapters"
 	cmd "github.com/sestinj/basin-node/cmd"
+	. "github.com/sestinj/basin-node/node"
 	"github.com/sestinj/basin-node/util"
 )
 
