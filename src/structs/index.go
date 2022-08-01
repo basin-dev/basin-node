@@ -39,3 +39,8 @@ type ManifestJson struct {
 	PublicRead   bool        `json:"publicRead"`
 	PublicWrite  bool        `json:"publicWrite"`
 }
+
+type AdapterConfig struct {
+	AdapterName string      `json:"adapterName"`
+	Config      interface{} `json:"config"`
+}

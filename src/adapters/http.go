@@ -2,21 +2,66 @@ package adapters
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+
+	"gopkg.in/yaml.v3"
+)
+
+var (
+	httpAdapter = HttpAdapter{}
 )
 
 type HttpAdapter struct{}
 
+type EndpointDescription struct {
+	Url    string
+	Method string
+	Body   []byte
+}
+
+type HttpAdapterConfig struct {
+	Read  EndpointDescription
+	Write EndpointDescription
+}
+
+func parseHttpConfig(url string) (HttpAdapterConfig, error) {
+	fullCfg, err := getAdapterConfig(url)
+	cfg := new(HttpAdapterConfig)
+	if err != nil {
+		return *cfg, err
+	}
+	err = yaml.Unmarshal(fullCfg.Config, cfg)
+	if err != nil {
+		return *cfg, err
+	}
+	return *cfg, nil
+}
+
 func (l HttpAdapter) Read(url string) ([]byte, error) {
+	cfg, err := parseHttpConfig(url)
+	if err != nil {
+		return nil, err
+	}
 
-	log.Fatal("THERE A PROBLEM HERE")
-	// TODO: Here lies the problem: url is supposed to be a Basin URL, but can't use that for any HTTP request. Need to get the HTTP url from metadata, but this itself requires making some request to a Basin URL...
-	// So we need a way of resolving Basin URLs. I think that basically what has to happen is we resolve to the machine that stores the data based only off of the user part of the URL, and then get the data from there. Gonna require some DHT stuff.
+	return performRequest(cfg.Read)
+}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func (l HttpAdapter) Write(url string, value []byte) error {
+	cfg, err := parseHttpConfig(url)
+	if err != nil {
+		return err
+	}
+
+	_, err = performRequest(cfg.Write)
+	return err
+}
+
+func performRequest(endpoint EndpointDescription) ([]byte, error) {
+	reader := bytes.NewReader(endpoint.Body)
+
+	req, err := http.NewRequest(endpoint.Method, endpoint.Url, reader)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -35,37 +80,4 @@ func (l HttpAdapter) Read(url string) ([]byte, error) {
 	}
 
 	return resBody, nil
-}
-
-// DELETE THIS do not use it, it's just here to quell errors before you get around to the Write func below
-type writeBody struct {
-	Url   string
-	Value []byte
-}
-
-func (l HttpAdapter) Write(url string, value []byte) error {
-
-	log.Fatal("THERE A PROBLEM HERE - not all requests have writeBody as the schema")
-
-	body := writeBody{Url: url, Value: value}
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	reader := bytes.NewReader(bodyBytes)
-
-	req, err := http.NewRequest(http.MethodPost, url, reader)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	_, err = http.DefaultClient.Do(req)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
 }
