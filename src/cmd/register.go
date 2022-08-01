@@ -5,7 +5,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -13,30 +15,33 @@ import (
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "Add new metadata settings",
-	Long: `Add new metadata settings, including
-	- data
+	Short: "Register a new resource",
+	Long: `Register a new resource as a producer. Input the necessary metadata, including
+	- adapter
 	- permissions
-	- royalties
-	- schemas
-	- cache
-	- wallet
-	as a consumer, producer, or user.`,
+	- schema`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("register called")
+		adapter, err := cmd.Flags().GetString("adapter")
+		permissions, err = cmd.Flags().GetString("permissions")
+		schema, err = cmd.Flags().GetString("schema")
+		url := args[0]
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not parse flags: %s", err.Error())
+		}
+
+		err = Register(context.Background(), url, adapter, permissions, schema)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to register resource: %s", err.Error())
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(registerCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// registerCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// registerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	registerCmd.Flags().StringP("adapter", "a", "", "Path to adapter file")
+	registerCmd.Flags().StringP("permissions", "p", "", "Path to permissions file")
+	registerCmd.Flags().StringP("schema", "s", "", "Path to schema file")
+	registerCmd.MarkFlagRequired("adapter")
+	registerCmd.MarkFlagRequired("permissions")
+	registerCmd.MarkFlagRequired("schema")
 }
