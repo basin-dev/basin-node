@@ -23,7 +23,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/write_request'
         description: Write Basin Resource
         required: true
       responses:
@@ -63,5 +63,92 @@ paths:
         "400":
           description: Error
       summary: Read Basin resource
+  /subscribe:
+    post:
+      description: Request subscription to Basin resource
+      operationId: subscribe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/subscribe_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Request subscription to Basin resource
 components:
-  schemas: {}
+  schemas:
+    PermissionJson:
+      properties:
+        data:
+          items:
+            type: string
+          type: array
+        capabilities:
+          items:
+            $ref: '#/components/schemas/capability.schema'
+          type: array
+        entities:
+          items:
+            type: string
+          type: array
+      title: permission
+      type: object
+    permission.schema:
+      properties:
+        data:
+          items:
+            type: string
+          type: array
+        capabilities:
+          items:
+            $ref: '#/components/schemas/capability.schema'
+          type: array
+        entities:
+          items:
+            type: string
+          type: array
+      title: permission
+      type: object
+    capability.schema:
+      properties:
+        action:
+          type: string
+        expiration:
+          format: date-time
+          type: string
+      title: capability
+      type: object
+    write_request:
+      properties:
+        url:
+          type: string
+        value:
+          format: byte
+          type: string
+      required:
+      - url
+      - value
+      type: object
+    subscribe_request:
+      properties:
+        url:
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/PermissionJson'
+          type: array
+      required:
+      - permissions
+      - url
+      type: object

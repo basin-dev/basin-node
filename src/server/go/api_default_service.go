@@ -12,8 +12,8 @@ package server
 
 import (
 	"context"
-	"net/http"
 	"errors"
+	"net/http"
 )
 
 // DefaultApiService is a service that implements the logic for the DefaultApiServicer
@@ -33,7 +33,7 @@ func (s *DefaultApiService) Read(ctx context.Context, url string) (ImplResponse,
 	// Add api_default_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
 
 	//TODO: Uncomment the next line to return response Response(200, map[string]interface{}{}) or use other options such as http.Ok ...
-	//return Response(200, map[string]interface{}{}), nil
+	return Response(200, map[string]interface{}{}), nil
 
 	//TODO: Uncomment the next line to return response Response(400, {}) or use other options such as http.Ok ...
 	//return Response(400, nil),nil

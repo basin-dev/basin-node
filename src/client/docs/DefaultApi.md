@@ -5,13 +5,14 @@ All URIs are relative to */api/v3*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**Read**](DefaultApi.md#Read) | **Get** /read | Read Basin resource
+[**Subscribe**](DefaultApi.md#Subscribe) | **Post** /subscribe | Request subscription to Basin resource
 [**Write**](DefaultApi.md#Write) | **Put** /write | Write Basin resource
 
 
 
 ## Read
 
-> map[string]interface{} Read(ctx).Url(url).Execute()
+> string Read(ctx).Url(url).Execute()
 
 Read Basin resource
 
@@ -39,7 +40,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Read``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `Read`: map[string]interface{}
+    // response from `Read`: string
     fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Read`: %v\n", resp)
 }
 ```
@@ -59,7 +60,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**map[string]interface{}**
+**string**
 
 ### Authorization
 
@@ -75,9 +76,75 @@ No authorization required
 [[Back to README]](../README.md)
 
 
+## Subscribe
+
+> map[string]interface{} Subscribe(ctx).SubscribeRequest(subscribeRequest).Execute()
+
+Request subscription to Basin resource
+
+
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    subscribeRequest := *openapiclient.NewSubscribeRequest("Url_example", []openapiclient.PermissionJson{*openapiclient.NewPermissionJson()}) // SubscribeRequest |  (optional)
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.Subscribe(context.Background()).SubscribeRequest(subscribeRequest).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Subscribe``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `Subscribe`: map[string]interface{}
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Subscribe`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiSubscribeRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **subscribeRequest** | [**SubscribeRequest**](SubscribeRequest.md) |  | 
+
+### Return type
+
+**map[string]interface{}**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## Write
 
-> map[string]interface{} Write(ctx).Body(body).Execute()
+> bool Write(ctx).WriteRequest(writeRequest).Execute()
 
 Write Basin resource
 
@@ -96,16 +163,16 @@ import (
 )
 
 func main() {
-    body := map[string]interface{}{ ... } // map[string]interface{} | Write Basin Resource
+    writeRequest := *openapiclient.NewWriteRequest("Url_example", string(123)) // WriteRequest | Write Basin Resource
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.DefaultApi.Write(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.DefaultApi.Write(context.Background()).WriteRequest(writeRequest).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Write``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `Write`: map[string]interface{}
+    // response from `Write`: bool
     fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Write`: %v\n", resp)
 }
 ```
@@ -121,11 +188,11 @@ Other parameters are passed through a pointer to a apiWriteRequest struct via th
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **map[string]interface{}** | Write Basin Resource | 
+ **writeRequest** | [**WriteRequest**](WriteRequest.md) | Write Basin Resource | 
 
 ### Return type
 
-**map[string]interface{}**
+**bool**
 
 ### Authorization
 

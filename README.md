@@ -32,6 +32,8 @@ go run main.go --help
 
 [Viper](https://github.com/spf13/viper) is used as a registry for all future application configuration needs as a 12 factor app
 
+[OpenAPI Generator](https://openapi-generator.tech/) is used to automatically generate server stubs and an API client for the node's HTTP interface.
+
 ### Adding a new command
 
 Use the Cobra-CLI generator to add a new command:

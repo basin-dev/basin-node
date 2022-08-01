@@ -58,6 +58,12 @@ func (c *DefaultApiController) Routes() Routes {
 			c.Read,
 		},
 		{
+			"Subscribe",
+			strings.ToUpper("Post"),
+			"/api/v3/subscribe",
+			c.Subscribe,
+		},
+		{
 			"Write",
 			strings.ToUpper("Put"),
 			"/api/v3/write",
@@ -81,16 +87,44 @@ func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// Write - Write Basin resource
-func (c *DefaultApiController) Write(w http.ResponseWriter, r *http.Request) {
-	bodyParam := map[string]interface{}{}
+// Subscribe - Request subscription to Basin resource
+func (c *DefaultApiController) Subscribe(w http.ResponseWriter, r *http.Request) {
+	subscribeRequestParam := SubscribeRequest{}
 	d := json.NewDecoder(r.Body)
 	d.DisallowUnknownFields()
-	if err := d.Decode(&bodyParam); err != nil {
+	if err := d.Decode(&subscribeRequestParam); err != nil {
 		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
 		return
 	}
-	result, err := c.service.Write(r.Context(), bodyParam)
+	if err := AssertSubscribeRequestRequired(subscribeRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Subscribe(r.Context(), subscribeRequestParam)
+	// If an error occurred, encode the error with the status code
+	if err != nil {
+		c.errorHandler(w, r, err, &result)
+		return
+	}
+	// If no error, encode the body and the result code
+	EncodeJSONResponse(result.Body, &result.Code, w)
+
+}
+
+// Write - Write Basin resource
+func (c *DefaultApiController) Write(w http.ResponseWriter, r *http.Request) {
+	writeRequestParam := WriteRequest{}
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&writeRequestParam); err != nil {
+		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
+		return
+	}
+	if err := AssertWriteRequestRequired(writeRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Write(r.Context(), writeRequestParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)

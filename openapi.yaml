@@ -24,6 +24,15 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                url:
+                  type: string
+                value:
+                  type: string
+                  format: byte
+              required:
+                - url
+                - value
         description: Write Basin Resource
         required: true
       responses:
@@ -31,7 +40,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: boolean
           description: Successful operation
         "400":
           description: Error
@@ -58,10 +67,47 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: string
+                format: bytes # TODO: Should this be binary or bytes? The corresponding go types generated are *os.File and string
           description: successful operation
         "400":
           description: Error
       summary: Read Basin resource
+  /subscribe:
+    post:
+      description: Request subscription to Basin resource
+      operationId: subscribe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PermissionJson"
+              required:
+              - url
+              - permissions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Request subscription to Basin resource
+
 components:
-  schemas: {}
+  schemas:
+    PermissionJson:
+      $ref: "schemas/permission.schema.json"
