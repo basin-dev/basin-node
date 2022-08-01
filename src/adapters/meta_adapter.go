@@ -6,11 +6,11 @@ It is only a NICE TO HAVE feature right now.
 package adapters
 
 import (
+	"encoding/json"
 	"errors"
 
 	. "github.com/sestinj/basin-node/structs"
 	"github.com/sestinj/basin-node/util"
-	"gopkg.in/yaml.v3"
 )
 
 type Adapter interface {
@@ -33,12 +33,12 @@ func getAdapterConfig(dataUrl string) (RawAdapterConfig, error) {
 	if err != nil {
 		return raw, err
 	}
-	err = yaml.Unmarshal(bytes, cfg)
+	err = json.Unmarshal(bytes, cfg)
 	if err != nil {
 		return raw, err
 	}
 
-	cfgData, err := yaml.Marshal(cfg.Config)
+	cfgData, err := json.Marshal(cfg.Config)
 	if err != nil {
 		return raw, err
 	}

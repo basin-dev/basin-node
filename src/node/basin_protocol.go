@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -16,6 +18,7 @@ import (
 	. "github.com/sestinj/basin-node/structs"
 	. "github.com/sestinj/basin-node/util"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 )
 
 type ReadReqAnchor struct {
@@ -130,6 +133,37 @@ func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte)
 	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 }
 
+/* Takes a file with raw bytes (in either yaml or json format), converts to the given type T, then encodes this back into bytes but in JSON format.
+This allows users to input whatever markdown filetype they feel most comfortable with, but it is always converted to a standard format: JSON.
+*/
+func marshalToJson[T any](filepath string) ([]byte, error) {
+	raw, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+	segs := strings.Split(filepath, ".")
+
+	var t T
+	switch segs[len(segs)-1] {
+	case "json":
+		err = json.Unmarshal(raw, &t)
+	case "yaml":
+		err = yaml.Unmarshal(raw, &t)
+	default:
+		return nil, errors.New("Cannot parse filetype: " + segs[len(segs)-1])
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	rawJson, err := json.Marshal(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return rawJson, nil
+}
+
 // Working on making the metadata appear...
 func (b *BasinNode) Register(ctx context.Context, url string, adapterPath string, permissionsPath string, schemaPath string) error {
 	// A couple of todos for later...
@@ -147,7 +181,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapterPath string
 	// SCHEMA
 	schemaUrl := GetMetadataUrl(url, Schema)
 	g.Go(func() error {
-		schemaRaw, err := ioutil.ReadFile(schemaPath)
+		schemaRaw, err := marshalToJson[SchemaJson](schemaPath)
 		if err != nil {
 			return err
 		}
@@ -157,7 +191,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapterPath string
 	// PERMISSIONS
 	permUrl := GetMetadataUrl(url, Permissions)
 	g.Go(func() error {
-		permRaw, err := ioutil.ReadFile(permissionsPath)
+		permRaw, err := marshalToJson[[]PermissionJson](permissionsPath)
 		if err != nil {
 			return err
 		}
@@ -167,7 +201,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapterPath string
 	// ADAPTER CONFIG
 	adpUrl := GetMetadataUrl(url, Adapter)
 	g.Go(func() error {
-		adpRaw, err := ioutil.ReadFile(adapterPath)
+		adpRaw, err := marshalToJson[AdapterConfig](adapterPath)
 		if err != nil {
 			return err
 		}

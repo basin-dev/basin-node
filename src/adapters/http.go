@@ -2,11 +2,10 @@ package adapters
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
-
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -32,7 +31,7 @@ func parseHttpConfig(url string) (HttpAdapterConfig, error) {
 	if err != nil {
 		return *cfg, err
 	}
-	err = yaml.Unmarshal(fullCfg.Config, cfg)
+	err = json.Unmarshal(fullCfg.Config, cfg)
 	if err != nil {
 		return *cfg, err
 	}
