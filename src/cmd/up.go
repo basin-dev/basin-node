@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"log"
 
 	"github.com/sestinj/basin-node/node"
 	"github.com/spf13/cobra"
@@ -16,6 +17,8 @@ var upCmd = &cobra.Command{
 	Short: "Start a Basin node",
 	Long:  `Start a Basin node`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		log.Println("UP")
 
 		httpUrl, err := cmd.Flags().GetString("http")
 		if err != nil { // TODO: @TyDunn, does the value argument to the flag creation functions below set the default value? Why would an error occur?
