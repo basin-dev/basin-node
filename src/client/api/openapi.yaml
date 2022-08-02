@@ -40,6 +40,31 @@ paths:
         "405":
           description: Validation exception
       summary: Write Basin resource
+  /register:
+    post:
+      description: Register Basin resource
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/register_request'
+        description: Register Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Register Basin resource
   /read:
     get:
       description: Read Basin resource
@@ -105,6 +130,16 @@ components:
           type: array
       title: permission
       type: object
+    AdapterJson:
+      properties:
+        adapterName:
+          type: string
+        config:
+          type: object
+      required:
+      - adapterName
+      - config
+      type: object
     permission.schema:
       properties:
         data:
@@ -120,6 +155,16 @@ components:
             type: string
           type: array
       title: permission
+      type: object
+    adapter.schema:
+      properties:
+        adapterName:
+          type: string
+        config:
+          type: object
+      required:
+      - adapterName
+      - config
       type: object
     capability.schema:
       properties:
@@ -140,6 +185,24 @@ components:
       required:
       - url
       - value
+      type: object
+    register_request:
+      properties:
+        url:
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/PermissionJson'
+          type: array
+        adapter:
+          $ref: '#/components/schemas/AdapterJson'
+        schema:
+          type: object
+      required:
+      - adapter
+      - permissions
+      - schema
+      - url
       type: object
     subscribe_request:
       properties:

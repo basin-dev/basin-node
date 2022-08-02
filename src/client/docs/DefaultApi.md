@@ -5,6 +5,7 @@ All URIs are relative to */api/v3*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**Read**](DefaultApi.md#Read) | **Get** /read | Read Basin resource
+[**Register**](DefaultApi.md#Register) | **Post** /register | Register Basin resource
 [**Subscribe**](DefaultApi.md#Subscribe) | **Post** /subscribe | Request subscription to Basin resource
 [**Write**](DefaultApi.md#Write) | **Put** /write | Write Basin resource
 
@@ -69,6 +70,72 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## Register
+
+> bool Register(ctx).RegisterRequest(registerRequest).Execute()
+
+Register Basin resource
+
+
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    registerRequest := *openapiclient.NewRegisterRequest("Url_example", []openapiclient.PermissionJson{*openapiclient.NewPermissionJson()}, *openapiclient.NewAdapterJson("AdapterName_example", map[string]interface{}(123)), map[string]interface{}(123)) // RegisterRequest | Register Basin Resource
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.Register(context.Background()).RegisterRequest(registerRequest).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Register``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `Register`: bool
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Register`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiRegisterRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **registerRequest** | [**RegisterRequest**](RegisterRequest.md) | Register Basin Resource | 
+
+### Return type
+
+**bool**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

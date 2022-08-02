@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/sestinj/basin-node/client"
+	"github.com/sestinj/basin-node/util"
+	"github.com/spf13/cobra"
 )
 
 // registerCmd represents the register command
@@ -34,11 +34,23 @@ var registerCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Could not parse flags: %s", err.Error())
 		}
 
-		var _ client.APIClient
-
-		err = Register(context.Background(), url, adapter, permissions, schema)
+		adata, err := util.UnmarshalFromFile[client.AdapterJson](adapter)
+		pdata, err := util.UnmarshalFromFile[[]client.PermissionJson](permissions)
+		sdata, err := util.UnmarshalFromFile[map[string]interface{}](schema)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not read file: %s", err.Error())
+		}
+
+		cfg := client.NewConfiguration()
+		apiClient := client.NewAPIClient(cfg)
+		ctx := context.Background()
+
+		registerRequest := client.NewRegisterRequest(url, *pdata, *adata, *sdata)
+		ok, r, err := apiClient.DefaultApi.Register(ctx).RegisterRequest(*registerRequest).Execute()
+		if err != nil || !ok {
 			fmt.Fprintf(os.Stderr, "Failed to register resource: %s", err.Error())
+		} else if r.StatusCode != 200 {
+			fmt.Fprintf(os.Stderr, "Failed to register resource: %s", r.Status)
 		}
 	},
 }

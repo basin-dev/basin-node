@@ -79,15 +79,19 @@ All URIs are relative to */api/v3*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultApi* | [**Read**](docs/DefaultApi.md#read) | **Get** /read | Read Basin resource
+*DefaultApi* | [**Register**](docs/DefaultApi.md#register) | **Post** /register | Register Basin resource
 *DefaultApi* | [**Subscribe**](docs/DefaultApi.md#subscribe) | **Post** /subscribe | Request subscription to Basin resource
 *DefaultApi* | [**Write**](docs/DefaultApi.md#write) | **Put** /write | Write Basin resource
 
 
 ## Documentation For Models
 
+ - [AdapterJson](docs/AdapterJson.md)
+ - [AdapterSchema](docs/AdapterSchema.md)
  - [CapabilitySchema](docs/CapabilitySchema.md)
  - [PermissionJson](docs/PermissionJson.md)
  - [PermissionSchema](docs/PermissionSchema.md)
+ - [RegisterRequest](docs/RegisterRequest.md)
  - [SubscribeRequest](docs/SubscribeRequest.md)
  - [WriteRequest](docs/WriteRequest.md)
 

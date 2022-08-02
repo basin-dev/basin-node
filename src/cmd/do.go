@@ -43,7 +43,8 @@ var doCmd = &cobra.Command{
 			} else if r.StatusCode != 200 {
 				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", r.Status)
 			}
-			fmt.Fprintln(os.Stdout, []byte(resp)) // TODO: Can we decode the bytes for the user? Where should this happen?????
+			fmt.Fprintln(os.Stdout, resp)
+			// TODO: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		case "write":
 			if len(args) < 3 {
 				log.Fatal("Not enough arguments supplied to write command.")

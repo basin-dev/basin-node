@@ -49,6 +49,47 @@ paths:
         "405":
           description: Validation exception
       summary: Write Basin resource
+  /register:
+    post:
+      description: Register Basin resource
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                permissions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PermissionJson"
+                adapter:
+                  $ref: "#/components/schemas/AdapterJson"
+                schema:
+                  type: object # JSON Schema
+              required:
+                - url
+                - permissions
+                - adapter
+                - schema
+        description: Register Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Register Basin resource
   /read:
     get:
       description: Read Basin resource
@@ -111,3 +152,5 @@ components:
   schemas:
     PermissionJson:
       $ref: "schemas/permission.schema.json"
+    AdapterJson:
+      $ref: "schemas/adapter.schema.json"
