@@ -37,6 +37,22 @@ const ProtocolSubRes = "/basin/subres/1.0.0"
 
 // TODO: ProtocolWriteReq/Res and associated handlers
 
+var (
+	TheBasinNode *BasinNode // Is this sus?
+)
+
+type BasinNodeConfig struct {
+	Http string
+	Did  string
+	Pw   string
+}
+
+func (c *BasinNodeConfig) SetDefaults() {
+	if c.Http == "" {
+		c.Http = "127.0.0.1:8555"
+	}
+}
+
 func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
@@ -53,6 +69,7 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 
 	basin.LoadPrivateKey(config.Did, config.Pw)
 
+	TheBasinNode = &basin
 	return basin, nil
 }
 

@@ -1,23 +1,23 @@
-package node
+package main
 
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/sestinj/basin-node/adapters"
+	. "github.com/sestinj/basin-node/node"
+	server "github.com/sestinj/basin-node/server/go"
 	"github.com/sestinj/basin-node/util"
 )
 
-type BasinNodeConfig struct {
-	Http string
-	Did  string
-	Pw   string
-}
+func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
+	DefaultApiService := server.NewDefaultApiService()
+	DefaultApiController := server.NewDefaultApiController(DefaultApiService)
 
-func (c *BasinNodeConfig) SetDefaults() {
-	if c.Http == "" {
-		c.Http = "127.0.0.1:3000"
-	}
+	router := server.NewRouter(DefaultApiController)
+
+	log.Fatal(http.ListenAndServe(":8555", router))
 }
 
 func StartEverything(ctx context.Context, config BasinNodeConfig) {

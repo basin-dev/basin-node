@@ -58,6 +58,12 @@ func (c *DefaultApiController) Routes() Routes {
 			c.Read,
 		},
 		{
+			"Register",
+			strings.ToUpper("Post"),
+			"/api/v3/register",
+			c.Register,
+		},
+		{
 			"Subscribe",
 			strings.ToUpper("Post"),
 			"/api/v3/subscribe",
@@ -77,6 +83,30 @@ func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	urlParam := query.Get("url")
 	result, err := c.service.Read(r.Context(), urlParam)
+	// If an error occurred, encode the error with the status code
+	if err != nil {
+		c.errorHandler(w, r, err, &result)
+		return
+	}
+	// If no error, encode the body and the result code
+	EncodeJSONResponse(result.Body, &result.Code, w)
+
+}
+
+// Register - Register Basin resource
+func (c *DefaultApiController) Register(w http.ResponseWriter, r *http.Request) {
+	registerRequestParam := RegisterRequest{}
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&registerRequestParam); err != nil {
+		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
+		return
+	}
+	if err := AssertRegisterRequestRequired(registerRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Register(r.Context(), registerRequestParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)
