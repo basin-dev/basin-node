@@ -1,6 +1,6 @@
 # \DefaultApi
 
-All URIs are relative to */api/v3*
+All URIs are relative to *http://127.0.0.1:8555/api/v3*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------

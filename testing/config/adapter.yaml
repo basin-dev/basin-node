@@ -1,9 +1,0 @@
-adapterName: http
-config:
-  read:
-    url: http://localhost:8000/followers
-    method: GET
-  write:
-    url: http://localhost:8000/followers
-    method: PUT
-    body: nothing

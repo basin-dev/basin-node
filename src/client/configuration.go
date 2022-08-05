@@ -106,7 +106,7 @@ func NewConfiguration() *Configuration {
 		Debug:            false,
 		Servers:          ServerConfigurations{
 			{
-				URL: "/api/v3",
+				URL: "http://127.0.0.1:8555/api/v3",
 				Description: "No description provided",
 			},
 		},

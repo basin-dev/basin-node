@@ -23,9 +23,9 @@ var registerCmd = &cobra.Command{
 	- permissions
 	- schema`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !interactive {
-			fmt.Fprintln(os.Stderr, "This command can only be run in interactive mode. Use `basin attach` first.")
-		}
+		// if !interactive {
+		// 	fmt.Fprintln(os.Stderr, "This command can only be run in interactive mode. Use `basin attach` first.")
+		// }
 		adapter, err := cmd.Flags().GetString("adapter")
 		permissions, err := cmd.Flags().GetString("permissions")
 		schema, err := cmd.Flags().GetString("schema")
@@ -46,11 +46,12 @@ var registerCmd = &cobra.Command{
 		ctx := context.Background()
 
 		registerRequest := client.NewRegisterRequest(url, *pdata, *adata, *sdata)
+
 		ok, r, err := apiClient.DefaultApi.Register(ctx).RegisterRequest(*registerRequest).Execute()
 		if err != nil || !ok {
 			fmt.Fprintf(os.Stderr, "Failed to register resource: %s", err.Error())
 		} else if r.StatusCode != 200 {
-			fmt.Fprintf(os.Stderr, "Failed to register resource: %s", r.Status)
+			fmt.Fprintf(os.Stderr, "Response returned error: %s", r.Status)
 		}
 	},
 }

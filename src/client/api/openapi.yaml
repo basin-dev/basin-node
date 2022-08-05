@@ -13,7 +13,7 @@ externalDocs:
   description: Find out more about Basin
   url: https://github.com/sestinj/basin-node
 servers:
-- url: /api/v3
+- url: http://127.0.0.1:8555/api/v3
 paths:
   /write:
     put:

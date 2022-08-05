@@ -38,6 +38,7 @@ func RunConsole() {
 	for {
 		input := prompt()
 		// TODO: How to manually pass the input into Cobra CLI?
+
 		fmt.Println(input)
 	}
 }
@@ -62,6 +63,6 @@ var attachCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(attachCmd)
-	attachCmd.Flags().String("http", "127.0.0.1:8555", "The URL where the node to connect to is being served.")
+	attachCmd.Flags().String("http", "http://127.0.0.1:8555", "The URL where the node to connect to is being served.")
 	attachCmd.MarkFlagRequired("http")
 }

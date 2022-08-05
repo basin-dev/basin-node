@@ -1,0 +1,15 @@
+{
+  "adapterName": "http",
+  "config": {
+    "read": {
+      "url": "http://localhost:8000/followers",
+      "body": "nothing",
+      "method": "GET"
+    },
+    "write": {
+      "url": "http://localhost:8000/followers",
+      "body": "nothing",
+      "method": "PUT"
+    }
+  }
+}

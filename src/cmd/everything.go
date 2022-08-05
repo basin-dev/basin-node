@@ -1,9 +1,12 @@
-package main
+package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/sestinj/basin-node/adapters"
 	. "github.com/sestinj/basin-node/node"
@@ -17,29 +20,17 @@ func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
 
 	router := server.NewRouter(DefaultApiController)
 
-	log.Fatal(http.ListenAndServe(":8555", router))
+	segs := strings.Split(b.Http, ":")
+	port := segs[len(segs)-1]
+	fmt.Fprintf(os.Stdout, "Listening at %s...\n", b.Http)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 func StartEverything(ctx context.Context, config BasinNodeConfig) {
-	// Start the BasinNode (libp2p host with associated protocol, stream handler)
-	basin, err := StartBasinNode(config)
-	if err != nil {
-		log.Fatal("Failed to instantiate the BasinNode: " + err.Error())
-	}
-
-	// Create the Router
-	_, err = StartKademliaRouter(ctx, basin.Host)
-	if err != nil {
-		log.Fatal("Failed to instantiate router: ", err.Error())
-	}
-
-	// Create new PubSub
-	_, err = StartPubSub(ctx, basin.Host)
-	if err != nil {
-		log.Fatal("Failed to instantiate pubsub: " + err.Error())
-	}
+	// NOTE: The order here matters. For example, db must start before node.
 
 	// Start up the local LevelDB database
+	log.Println("Initializing LevelDB...")
 	db, err := adapters.StartDB()
 	if err != nil {
 		log.Fatal(err)
@@ -47,6 +38,29 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	util.StartLocalOnlyDb(db, "/local/")
 
+	// Start the BasinNode (libp2p host with associated protocol, stream handler)
+	log.Println("Launching Basin Node...")
+	basin, err := StartBasinNode(config)
+	if err != nil {
+		log.Fatal("Failed to instantiate the BasinNode: " + err.Error())
+	}
+
+	// Create the Router
+	log.Println("Starting Router...")
+	StartHardcodedRouter(basin.Host.Peerstore().PeerInfo(basin.Host.ID()))
+	// _, err = StartKademliaRouter(ctx, basin.Host)
+	// if err != nil {
+	// 	log.Fatal("Failed to instantiate router: ", err.Error())
+	// }
+
+	// Create new PubSub
+	log.Println("Creating PubSub...")
+	_, err = StartPubSub(ctx, basin.Host)
+	if err != nil {
+		log.Fatal("Failed to instantiate pubsub: " + err.Error())
+	}
+
 	// Start up this node's HTTP API, concurrently with CLI
+	log.Println("Serving HTTP API...")
 	RunHttpServer(ctx, &basin, config.Http)
 }

@@ -74,7 +74,7 @@ ctx = context.WithValue(context.Background(), client.ContextOperationServerVaria
 
 ## Documentation for API Endpoints
 
-All URIs are relative to */api/v3*
+All URIs are relative to *http://127.0.0.1:8555/api/v3*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------

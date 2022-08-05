@@ -24,10 +24,6 @@ type PermissionJson struct {
 type SchemaJson struct {
 }
 
-type WalletInfoJson struct {
-	Did string `json:"did"`
-}
-
 type ManifestJson struct {
 	Url          string      `json:"url"`
 	ProducerDid  string      `json:"producerDid"`

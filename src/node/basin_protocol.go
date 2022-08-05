@@ -23,11 +23,13 @@ type ReadReqAnchor struct {
 	Ch  chan *pb.ReadResponse
 }
 
+/* TODO: All plugins should be here. There should be a Router(s?) and Adapter (for the metadata whose configuration includes the other adapters.) field */
 type BasinNode struct {
 	Host         host.Host
 	ReadRequests map[string]*ReadReqAnchor
 	Did          string
 	PrivKey      ed25519.PrivateKey
+	Http         string
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
@@ -49,7 +51,7 @@ type BasinNodeConfig struct {
 
 func (c *BasinNodeConfig) SetDefaults() {
 	if c.Http == "" {
-		c.Http = "127.0.0.1:8555"
+		c.Http = "http://127.0.0.1:8555"
 	}
 }
 
@@ -57,7 +59,7 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
-	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}}
+	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http}
 	if err != nil {
 		return basin, err
 	}
@@ -68,6 +70,17 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	h.SetStreamHandler(ProtocolSubReq, basin.subReqHandler)
 
 	basin.LoadPrivateKey(config.Did, config.Pw)
+
+	// Initialize necessary files TODO: Some more though here
+	sourcesUrl := GetUserDataUrl(basin.Did, "producer.sources")
+	sources, err := json.Marshal([]string{"basin://test"})
+	if err != nil {
+		log.Fatal("Couldn't initialize files: " + err.Error())
+	}
+	err = LocalOnlyDb.Write(sourcesUrl, sources)
+	if err != nil {
+		log.Fatal("Failed to write sources file: " + err.Error())
+	}
 
 	TheBasinNode = &basin
 	return basin, nil
@@ -89,8 +102,7 @@ func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
 	// Get list of sources on this node (can't call GetSources for infinite loop)
 	// TODO: Should be using something more efficient so we don't have to search over whole array
-	walletInfo := b.GetWalletInfo()
-	srcsUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
+	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
 	data, err := LocalOnlyDb.Read(srcsUrl)
 	if err != nil {
 		return nil, err
@@ -159,6 +171,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// This is when we want to start storing things as actual files? Just start thinking about it.
 
 	// Run all the file writes in parallel
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	// SCHEMA
@@ -166,6 +179,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		schemaRaw, err := json.Marshal(schema)
 		if err != nil {
+			log.Println("Error marshalling schema file: " + err.Error())
 			return err
 		}
 		return b.WriteResource(ctx, schemaUrl, schemaRaw)
@@ -176,6 +190,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		permRaw, err := json.Marshal(permissions)
 		if err != nil {
+			log.Println("Error marshalling permissions file: " + err.Error())
 			return err
 		}
 		return b.WriteResource(ctx, permUrl, permRaw)
@@ -186,51 +201,47 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		adpRaw, err := json.Marshal(adapter)
 		if err != nil {
+			log.Println("Error marshalling adapter file: " + err.Error())
 			return err
 		}
 		return b.WriteResource(ctx, adpUrl, adpRaw)
 	})
 
 	// SOURCES
-	walletInfo := b.GetWalletInfo()
-	sourcesUrl := GetUserDataUrl(walletInfo.Did, "producer.sources")
+	sourcesUrl := GetUserDataUrl(b.Did, "producer.sources")
 	g.Go(func() error {
 		currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
 		var srcs []string
-		err = json.Unmarshal(currSrcs, srcs)
+		err = json.Unmarshal(currSrcs, &srcs)
 		if err != nil {
+			log.Println("Error parsing sources file: " + err.Error())
 			return err
 		}
 		srcs = append(srcs, url)
 		finalSrcs, err := json.Marshal(srcs)
 		if err != nil {
+			log.Println("Error marshalling sources: " + err.Error())
 			return err
 		}
 		return b.WriteResource(ctx, sourcesUrl, finalSrcs)
 	})
 
 	if err := g.Wait(); err != nil {
+		log.Println("Error writing to one of the files: " + err.Error())
 		return err
 	}
 
 	// Register with the routing table
 	err := HostRouter.RegisterUrl(ctx, url)
 	if err != nil {
+		log.Println("Error regstering URL to Kademlia DHT: " + err.Error())
 		return err
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
+	log.Println("Successfully registered resource at " + url)
 	return nil
-}
-
-func (b *BasinNode) GetWalletInfo() *WalletInfoJson {
-	data, err := LocalOnlyDb.Read("wallet")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return Unmarshal[WalletInfoJson](data)
 }
 
 func (b *BasinNode) GetPermissions(ctx context.Context, dataUrl string) (*[]PermissionJson, error) {
@@ -252,9 +263,7 @@ func (b *BasinNode) GetSchema(ctx context.Context, dataUrl string) (*SchemaJson,
 }
 
 func (b *BasinNode) GetSources(ctx context.Context, mode string) (*[]string, error) {
-	walletInfo := b.GetWalletInfo()
-
-	url := GetUserDataUrl(walletInfo.Did, mode+".sources")
+	url := GetUserDataUrl(b.Did, mode+".sources")
 	val, err := b.ReadResource(ctx, url)
 	if err != nil {
 		return nil, err
@@ -264,9 +273,7 @@ func (b *BasinNode) GetSources(ctx context.Context, mode string) (*[]string, err
 }
 
 func (b *BasinNode) GetRequests(ctx context.Context, mode string) (*[]PermissionJson, error) {
-	walletInfo := b.GetWalletInfo()
-
-	url := GetUserDataUrl(walletInfo.Did, mode+".requests")
+	url := GetUserDataUrl(b.Did, mode+".requests")
 	val, err := b.ReadResource(ctx, url)
 	if err != nil {
 		return nil, err
