@@ -7,6 +7,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -36,10 +37,34 @@ func RunConsole() {
 		return GetInput(PROMPT, reader)
 	}
 	for {
-		input := prompt()
-		// TODO: How to manually pass the input into Cobra CLI?
 
-		fmt.Println(input)
+		input := strings.Split(prompt(), " ")
+
+		// basin register basin://ty.com.twitter --http localhost:/8555
+		if input[0] == "basin" {
+			if input[1] == "register" {
+				fmt.Println("register")
+			} else {
+				fmt.Println("only register is supported rn")
+			}
+		} else {
+			fmt.Println("command must start with basin")
+		}
+
+		// go run . register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
+		command, args, err := rootCmd.Find([]string{input[1]})
+
+		if err != nil {
+			log.Printf("Unknown Command to execute : %s\n", input)
+			continue
+		}
+
+		args = append(args, input[1:]...)
+
+		command.Run(command, args)
+
+		command.Execute()
+
 	}
 }
 
