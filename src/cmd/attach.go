@@ -40,7 +40,7 @@ func RunConsole() {
 
 		input := strings.Split(prompt(), " ")
 
-		// basin register basin://ty.com.twitter --http localhost:/8555
+		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		if input[0] == "basin" {
 			if input[1] == "register" {
 				fmt.Println("register")
