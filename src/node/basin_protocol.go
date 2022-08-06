@@ -223,7 +223,9 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 			log.Println("Error marshalling sources: " + err.Error())
 			return err
 		}
-		return b.WriteResource(ctx, sourcesUrl, finalSrcs)
+		// TODO: Should this be written to the LocalAdapter instead of LocalOnlyDb??
+		// return b.WriteResource(ctx, sourcesUrl, finalSrcs)
+		return LocalOnlyDb.Write(sourcesUrl, finalSrcs)
 	})
 
 	if err := g.Wait(); err != nil {
