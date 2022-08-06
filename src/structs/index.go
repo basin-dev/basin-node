@@ -24,10 +24,6 @@ type PermissionJson struct {
 type SchemaJson struct {
 }
 
-type WalletInfoJson struct {
-	Did string `json:"did"`
-}
-
 type ManifestJson struct {
 	Url          string      `json:"url"`
 	ProducerDid  string      `json:"producerDid"`
@@ -38,4 +34,9 @@ type ManifestJson struct {
 	Schema       interface{} `json:"interface"`
 	PublicRead   bool        `json:"publicRead"`
 	PublicWrite  bool        `json:"publicWrite"`
+}
+
+type AdapterConfig struct {
+	AdapterName string      `json:"adapterName"`
+	Config      interface{} `json:"config"`
 }

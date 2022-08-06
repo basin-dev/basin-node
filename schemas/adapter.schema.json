@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "properties": {
+        "adapterName": {
+            "type": "string"
+        },
+        "config": {
+            "type": "object"
+        }
+    },
+    "required": ["adapterName", "config"]
+}

@@ -1,0 +1,14 @@
+{
+  "$id": "https://basin.dev/schemas/capability",
+  "title": "capability",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "expiration": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

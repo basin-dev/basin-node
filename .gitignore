@@ -20,3 +20,5 @@ testing/env
 testing/__pycache__
 
 basin-node
+
+node_modules

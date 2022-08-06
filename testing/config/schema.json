@@ -1,0 +1,17 @@
+{
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "follower": {
+                "type": "object",
+                "propterties": {
+                    "accountId": "string",
+                    "userLink": "string"
+                },
+                "required": ["accountId", "userLink"]
+            }
+        },
+        "required": ["follower"]
+    }
+}

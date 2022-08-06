@@ -27,6 +27,16 @@ One can use basin-node to manage producer, consumer, & user functionality.`,
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
+// Whether we have called `basin attach` and are now in an interactive terminal, or not. If so, then the interactive config should exist
+var interactive = false
+
+// Configuration that gives interactive commands the necessary context
+type InteractiveConfig struct {
+	Url string
+}
+
+var interactiveConfig InteractiveConfig
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {

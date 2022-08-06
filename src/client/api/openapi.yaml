@@ -1,0 +1,218 @@
+openapi: 3.0.2
+info:
+  contact:
+    email: sestinj@gmail.com
+  description: Basin RPC API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://github.com/sestinj/basin-node
+  title: Basin RPC API
+  version: 1.0.11
+externalDocs:
+  description: Find out more about Basin
+  url: https://github.com/sestinj/basin-node
+servers:
+- url: http://127.0.0.1:8555/api/v3
+paths:
+  /write:
+    put:
+      description: Write Basin resource
+      operationId: write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/write_request'
+        description: Write Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Write Basin resource
+  /register:
+    post:
+      description: Register Basin resource
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/register_request'
+        description: Register Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Register Basin resource
+  /read:
+    get:
+      description: Read Basin resource
+      operationId: read
+      parameters:
+      - description: URL of Basin resource
+        explode: true
+        in: query
+        name: url
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: bytes
+                type: string
+          description: successful operation
+        "400":
+          description: Error
+      summary: Read Basin resource
+  /subscribe:
+    post:
+      description: Request subscription to Basin resource
+      operationId: subscribe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/subscribe_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Request subscription to Basin resource
+components:
+  schemas:
+    PermissionJson:
+      properties:
+        data:
+          items:
+            type: string
+          type: array
+        capabilities:
+          items:
+            $ref: '#/components/schemas/capability.schema'
+          type: array
+        entities:
+          items:
+            type: string
+          type: array
+      title: permission
+      type: object
+    AdapterJson:
+      properties:
+        adapterName:
+          type: string
+        config:
+          type: object
+      required:
+      - adapterName
+      - config
+      type: object
+    permission.schema:
+      properties:
+        data:
+          items:
+            type: string
+          type: array
+        capabilities:
+          items:
+            $ref: '#/components/schemas/capability.schema'
+          type: array
+        entities:
+          items:
+            type: string
+          type: array
+      title: permission
+      type: object
+    adapter.schema:
+      properties:
+        adapterName:
+          type: string
+        config:
+          type: object
+      required:
+      - adapterName
+      - config
+      type: object
+    capability.schema:
+      properties:
+        action:
+          type: string
+        expiration:
+          format: date-time
+          type: string
+      title: capability
+      type: object
+    write_request:
+      properties:
+        url:
+          type: string
+        value:
+          format: byte
+          type: string
+      required:
+      - url
+      - value
+      type: object
+    register_request:
+      properties:
+        url:
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/PermissionJson'
+          type: array
+        adapter:
+          $ref: '#/components/schemas/AdapterJson'
+        schema:
+          type: object
+      required:
+      - adapter
+      - permissions
+      - schema
+      - url
+      type: object
+    subscribe_request:
+      properties:
+        url:
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/PermissionJson'
+          type: array
+      required:
+      - permissions
+      - url
+      type: object
