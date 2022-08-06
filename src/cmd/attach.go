@@ -33,38 +33,37 @@ func RunConsole() {
 	| |_/ / | | |/\__/ /_| |_| |\  |
 	\____/\_| |_/\____/ \___/\_| \_/
 	`)
-	prompt := func() string {
-		return GetInput(PROMPT, reader)
-	}
+
 	for {
+		input := strings.Split(GetInput(PROMPT, reader), " ")
 
-		input := strings.Split(prompt(), " ")
-
-		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
-		if input[0] == "basin" {
-			if input[1] == "register" {
-				fmt.Println("register")
-			} else {
-				fmt.Println("only register is supported rn")
-			}
-		} else {
-			fmt.Println("command must start with basin")
+		// Special interactive mode commands
+		switch input[0] {
+		case "basin":
+			fmt.Println("No need to specify the basin prefix when in interactive mode, but your command was still parsed.")
+			input = input[1:]
+		case "quit", "exit":
+			fmt.Println("Exiting session...")
+			return
 		}
 
+		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		// go run . register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
-		command, args, err := rootCmd.Find([]string{input[1]})
+		// register basin://tydunn.com.twitter.followers -a ../testing/config/adapter.json -p ../testing/config/permissions.yaml -s ../testing/config/schema.json
 
+		command, args, err := rootCmd.Find(input)
 		if err != nil {
 			log.Printf("Unknown Command to execute : %s\n", input)
 			continue
 		}
 
-		args = append(args, input[1:]...)
+		err = command.ParseFlags(args)
+		if err != nil {
+			log.Printf("Err parsing flags: %s\n", err.Error())
+			continue
+		}
 
 		command.Run(command, args)
-
-		command.Execute()
-
 	}
 }
 
