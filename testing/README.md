@@ -88,15 +88,21 @@ Attach to the Basin node with interactive CLI by running:
 go run . attach --http=http://127.0.0.1:8555
 ```
 
-## Producer
+## Interacting with node in producer mode
 
-From within the Basin node with interactive CLI run:
+From within the Basin node with interactive CLI.
 
 Register your first resource:
 ```
 register basin://tydunn.com.twitter.followers -a ../testing/config/adapter.json -p ../testing/config/permissions.yaml -s ../testing/config/schema.json
 ```
 
-## Consumer
+Try reading it:
+```
+do read basin://tydunn.com.twitter.followers
+```
+
+
+## Interacting with node in consumer mode
 
 Question: what are the steps for the consumer?
