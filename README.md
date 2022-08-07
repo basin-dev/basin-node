@@ -1,6 +1,15 @@
 <!--- ![](docs/green.png) -->
 <!--- https://shields.io/ (once the repo is public) -->
-![](docs/basin.png)
+<!--- ![](docs/basin.png) -->
+
+```go
+______  ___   _____ _____ _   _ 
+| ___ \/ _ \ /  ___|_   _| \ | |
+| |_/ / /_\ \\ '--.  | | |  \| |
+| ___ \  _  | '--. \ | | | . ' |
+| |_/ / | | |/\__/ /_| |_| |\  |
+\____/\_| |_/\____/ \___/\_| \_/
+```
 
 # Basin node
 
@@ -66,7 +75,7 @@ From within the Basin node with interactive CLI run:
 
 Register your first resource:
 ```
-
+register basin://tydunn.com.twitter.followers -a ../testing/config/adapter.json -p ../testing/config/permissions.yaml -s ../testing/config/schema.json
 ```
 
 ## Consumer
