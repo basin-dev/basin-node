@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/btcsuite/btcd/btcutil/base58"
 	didUtil "github.com/sestinj/basin-node/did"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,9 @@ var extractCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Failed to read keystore file: %s\n", err.Error())
 		}
 
-		fmt.Fprintf(os.Stdout, "Private Key: %s\nPublic Key: %s\nDID: %s\n", string(priv), priv.Public(), did)
+		privBase58 := base58.Encode(priv)
+
+		fmt.Fprintf(os.Stdout, "Private Key: %s\nPublic Key: %s\nDID: %s\n", string(privBase58), priv.Public(), did)
 	},
 }
 

@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
 	"io/ioutil"
@@ -36,7 +37,7 @@ func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	sig, err := b.PrivKey.Sign(rand.Reader, digest, nil)
+	sig, err := b.PrivKey.Sign(rand.Reader, digest, crypto.Hash(0))
 	if err != nil {
 		return nil, err
 	}
