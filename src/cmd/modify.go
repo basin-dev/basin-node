@@ -5,7 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/sestinj/basin-node/client"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +28,19 @@ var modifyCmd = &cobra.Command{
 
 		mode, _ := cmd.Flags().GetString("mode")
 		entity, _ := cmd.Flags().GetString("entity")
+
+		if len(args) < 3 {
+			log.Fatal("Not enough arguments supplied to modify command.")
+		}
+		value := args[2]
+		modifyReq := client.NewModifyRequest(url, value)
+		resp, r, err := apiClient.DefaultApi.Modify(ctx).ModifyRequest(*writeReq).Execute()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
+		} else if r.StatusCode != 200 {
+			fmt.Fprintf(os.Stderr, "Failed to read resource: %s", r.Status)
+		}
+		fmt.Fprintln(os.Stdout, resp)
 
 		switch mode {
 		case "consumer":
