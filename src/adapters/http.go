@@ -57,16 +57,6 @@ func (l HttpAdapter) Write(url string, value []byte) error {
 	return err
 }
 
-func (l HttpAdapter) Modify(url string, value []byte) error {
-	cfg, err := parseHttpConfig(url)
-	if err != nil {
-		return err
-	}
-
-	_, err = performRequest(cfg.Modify)
-	return err
-}
-
 func performRequest(endpoint EndpointDescription) ([]byte, error) {
 	reader := bytes.NewReader(endpoint.Body)
 

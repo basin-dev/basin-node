@@ -111,13 +111,4 @@ func (m MetaAdapter) Write(url string, value []byte) error {
 	return adapter.Write(url, value)
 }
 
-func (m MetaAdapter) Modify(url string, value []byte) error {
-	adapter, err := selectAdapter(url)
-	if err != nil {
-		log.Printf("Error selecting adapter: %s\n", err.Error())
-		return err
-	}
-	return adapter.Modify(url, value)
-}
-
 var MainAdapter = MetaAdapter{}

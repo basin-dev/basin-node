@@ -159,12 +159,6 @@ func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte)
 	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 }
 
-/* The uniform interface for modifying any Basin resource, local or remote */
-func (b *BasinNode) ModifyResource(ctx context.Context, url string, value []byte) error {
-	return adapters.MainAdapter.Modify(url, value)
-	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
-}
-
 // Working on making the metadata appear...
 func (b *BasinNode) Register(ctx context.Context, url string, adapter client.AdapterJson, permissions []client.PermissionJson, schema map[string]interface{}) error {
 	// A couple of todos for later...
