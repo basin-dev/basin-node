@@ -63,6 +63,7 @@ func verifyMessage(msg proto.Message, msgData *pb.MessageData) bool {
 
 /* Create a new stream with specified peer and write the protobuf message to the stream under given protocol */
 func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) error {
+	log.Println("PEER INFO: ", id, b.Host.Peerstore().PeerInfo(id))
 	s, err := b.Host.NewStream(context.Background(), id, p)
 	if err != nil {
 		log.Println(err)

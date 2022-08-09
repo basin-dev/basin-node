@@ -23,6 +23,7 @@ Start node (from `src/`)
 ```bash
 go run . up --did <DID_1> --pw password --http http://localhost:8555
 ```
+>> And for now need to paste the public key into `everything.go`
 
 Attach in another terminal
 ```bash

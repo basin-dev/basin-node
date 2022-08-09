@@ -1,12 +1,9 @@
 package adapters
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -84,27 +81,6 @@ func performRequest(endpoint EndpointDescription) ([]byte, error) {
 		log.Println(err)
 		return nil, err
 	}
-
-	// TODO: Remove after demo and consider making the response self-describing
-	type FollowerInfo struct {
-		AccountId string `json:"accountId"`
-		UserLink  string `json:"userLink"`
-	}
-
-	type F struct {
-		Follower FollowerInfo `json:"follower"`
-	}
-
-	test := new([]F)
-	// data, err := base64.StdEncoding.DecodeString(resBody)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Couldn't hex.decodestring :(: %s\n", err.Error())
-	// }
-	err = json.Unmarshal(resBody, test)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "FAILURE :(: %s\n", err.Error())
-	}
-	log.Println("BODY: ", test)
 
 	return resBody, nil
 }

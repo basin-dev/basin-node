@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/sestinj/basin-node/adapters"
 	. "github.com/sestinj/basin-node/node"
 	server "github.com/sestinj/basin-node/server/go"
@@ -47,7 +50,22 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	// Create the Router
 	log.Println("Starting Router...")
-	StartHardcodedRouter(basin.Host.Peerstore().PeerInfo(basin.Host.ID()))
+	info := basin.Host.Peerstore().PeerInfo(basin.Host.ID())
+	if basin.Http == "http://localhost:8555" {
+		log.Println("AddrInfo: ", info.ID.String(), info.Addrs)
+	} else {
+		id, err := peer.Decode("QmbogsvJERH71eZfLhpwcmwtKgQQwKCWMQtUsW7s6zBBnL")
+		if err != nil {
+			log.Fatal("Failed to create ID from string:  ", err.Error())
+		}
+		ma, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8555")
+		if err != nil {
+			log.Fatal("Failed to create new multiaddr: ", err.Error())
+		}
+		info = peer.AddrInfo{ID: id, Addrs: []multiaddr.Multiaddr{ma}}
+		basin.Host.Peerstore().AddAddr(id, ma, time.Hour)
+	}
+	StartHardcodedRouter(info)
 	// _, err = StartKademliaRouter(ctx, basin.Host)
 	// if err != nil {
 	// 	log.Fatal("Failed to instantiate router: ", err.Error())
