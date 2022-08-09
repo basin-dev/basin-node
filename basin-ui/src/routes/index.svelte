@@ -1,18 +1,10 @@
 <script lang="ts">
-    import { getUserDataUrl } from "../basin-sdk/helpers";
-    import {BasinSDK} from "../basin-sdk";
-    let sources: string[] = [];
-    (async () => {
-        let basin = new BasinSDK("http://localhost:8555");
 
-        let did = "did:key:z6MkoYyGsB9WLBmf12RrcBdai1UPcDcyvNWcMQdRpXzzfo4H";
-        let sourcesUrl = getUserDataUrl(did, "producer.sources");
-
-        sources = await basin.read("basin://");
-    })
+    export let data: any;
 </script>
 
 <h1> Basin </h1>
 
-<h3>Producer Sources</h3>
-<p>{sources.join(", ")}</p>
+<!-- <h3>Producer Sources</h3> -->
+<h3>Ty's Followers</h3>
+<p>{JSON.stringify(JSON.parse(data || ""), null, '\t')}</p>
