@@ -105,6 +105,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
 	data, err := LocalOnlyDb.Read(srcsUrl)
 	if err != nil {
+		log.Println("Failed to read sources from LocalOnlyDb: ", err.Error())
 		return nil, err
 	}
 	srcs := Unmarshal[[]string](data)
@@ -199,6 +200,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// ADAPTER CONFIG
 	adpUrl := GetMetadataUrl(url, Adapter)
 	g.Go(func() error {
+		// TODO: Again you're causing problems not having a source of truth for type generation :((((
 		adpRaw, err := json.Marshal(adapter)
 		if err != nil {
 			log.Println("Error marshalling adapter file: " + err.Error())

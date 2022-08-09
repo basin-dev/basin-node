@@ -50,6 +50,7 @@ func RunConsole() {
 		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		// go run . register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		// register basin://tydunn.com.twitter.followers -a ../testing/config/adapter.json -p ../testing/config/permissions.yaml -s ../testing/config/schema.json
+		// do read basin://tydunn.com.twitter.followers
 
 		command, args, err := rootCmd.Find(input)
 		if err != nil {

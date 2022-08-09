@@ -13,6 +13,7 @@ package server
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/sestinj/basin-node/client"
@@ -34,7 +35,8 @@ func NewDefaultApiService() DefaultApiServicer {
 func (s *DefaultApiService) Read(ctx context.Context, url string) (ImplResponse, error) {
 	val, err := node.TheBasinNode.ReadResource(ctx, url)
 	if err != nil {
-		return Response(400, nil), nil
+		log.Println("Failed to read resource: ", err.Error())
+		return Response(400, err.Error()), err
 	}
 	return Response(200, val), nil
 }
