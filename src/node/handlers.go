@@ -70,7 +70,7 @@ func (b *BasinNode) subResHandler(s network.Stream) {
 		return
 	}
 
-	log.Fatal("NOT YET IMPLEMENTED")
+	log.Println("NOT YET IMPLEMENTED")
 }
 
 func (b *BasinNode) subReqHandler(s network.Stream) {
@@ -93,11 +93,17 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 		log.Println(err)
 		return
 	}
-	var capabilities []CapabilityJson
-	for _, capability := range data.Capabilities {
-		capabilities = append(capabilities, CapabilityJson{Expiration: capability.Expiration, Action: capability.Action})
+
+	var permissions []PermissionJson
+	for _, permission := range data.Permissions {
+		var capabilities []CapabilityJson
+		for _, capability := range permission.Capabilities {
+			capabilities = append(capabilities, CapabilityJson{Expiration: capability.Expiration, Action: capability.Action})
+		}
+		permissions = append(permissions, PermissionJson{Data: permission.Data, Capabilities: capabilities, Entities: permission.Entities})
 	}
-	*requests = append(*requests, PermissionJson{Entities: []string{data.MessageData.Did}, Data: []string{data.Url}, Capabilities: capabilities})
+
+	*requests = append(*requests, permissions...)
 	url := util.GetUserDataUrl(b.Did, "producer.requests")
 	val, err := json.Marshal(*requests)
 	if err != nil {
@@ -105,6 +111,9 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 		return
 	}
 	err = b.WriteResource(ctx, url, val)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (b *BasinNode) writeResHandler(s network.Stream) {

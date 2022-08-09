@@ -28,11 +28,16 @@ message Capability {
     string expiration = 2;
 }
 
+message Permission {
+    repeated string data = 1;
+    repeated Capability capabilities = 2;
+    repeated string entities = 3;
+}
+
 message SubscriptionRequest {
     MessageData messageData = 1;
 
-    string Url = 2;
-    repeated Capability capabilities = 3;
+    repeated Permission permissions = 2;
 }
 
 message SubscriptionResponse {

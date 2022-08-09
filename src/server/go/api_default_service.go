@@ -12,9 +12,7 @@ package server
 
 import (
 	"context"
-	"errors"
 	"log"
-	"net/http"
 
 	"github.com/sestinj/basin-node/client"
 	"github.com/sestinj/basin-node/node"
@@ -41,17 +39,22 @@ func (s *DefaultApiService) Read(ctx context.Context, url string) (ImplResponse,
 	return Response(200, val), nil
 }
 
-// Register - Register Basin resource
-func (s *DefaultApiService) Register(ctx context.Context, registerRequest RegisterRequest) (ImplResponse, error) {
+func typecastPermissions(original []PermissionJson) []client.PermissionJson {
 	// TODO: Ugh...why do I have to typecast here : (
 	var permissions []client.PermissionJson
-	for _, permission := range registerRequest.Permissions {
+	for _, permission := range original {
 		var capabilities []client.CapabilitySchema
 		for _, capability := range permission.Capabilities {
 			capabilities = append(capabilities, client.CapabilitySchema{Action: &capability.Action, Expiration: &capability.Expiration})
 		}
 		permissions = append(permissions, client.PermissionJson{Data: permission.Data, Entities: permission.Entities, Capabilities: capabilities})
 	}
+	return permissions
+}
+
+// Register - Register Basin resource
+func (s *DefaultApiService) Register(ctx context.Context, registerRequest RegisterRequest) (ImplResponse, error) {
+	permissions := typecastPermissions(registerRequest.Permissions)
 	err := node.TheBasinNode.Register(ctx, registerRequest.Url, client.AdapterJson(registerRequest.Adapter), permissions, registerRequest.Schema)
 	if err != nil {
 		return Response(400, false), nil
@@ -61,9 +64,13 @@ func (s *DefaultApiService) Register(ctx context.Context, registerRequest Regist
 
 // Subscribe - Request subscription to Basin resource
 func (s *DefaultApiService) Subscribe(ctx context.Context, subscribeRequest SubscribeRequest) (ImplResponse, error) {
-	// err := node.TheBasinNode.RequestSubscription(ctx, subscribeRequest.Url, subscribeRequest.Permissions)
-	// TODO: Weird thing you decided to do...
-	return Response(http.StatusNotImplemented, nil), errors.New("Subscribe method not implemented")
+	permissions := typecastPermissions(subscribeRequest.Permissions)
+	err := node.TheBasinNode.RequestSubscriptions(ctx, permissions)
+	if err != nil {
+		return Response(400, err.Error()), nil
+	}
+
+	return Response(200, "Noted"), nil
 }
 
 // Write - Write Basin resource

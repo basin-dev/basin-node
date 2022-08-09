@@ -164,7 +164,7 @@ import (
 )
 
 func main() {
-    subscribeRequest := *openapiclient.NewSubscribeRequest("Url_example", []openapiclient.PermissionJson{*openapiclient.NewPermissionJson()}) // SubscribeRequest |  (optional)
+    subscribeRequest := *openapiclient.NewSubscribeRequest([]openapiclient.PermissionJson{*openapiclient.NewPermissionJson()}) // SubscribeRequest |  (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)

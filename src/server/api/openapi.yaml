@@ -206,13 +206,10 @@ components:
       type: object
     subscribe_request:
       properties:
-        url:
-          type: string
         permissions:
           items:
             $ref: '#/components/schemas/PermissionJson'
           type: array
       required:
       - permissions
-      - url
       type: object

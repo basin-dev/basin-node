@@ -124,14 +124,11 @@ paths:
             schema:
               type: object
               properties:
-                url:
-                  type: string
                 permissions:
                   type: array
                   items:
                     $ref: "#/components/schemas/PermissionJson"
               required:
-              - url
               - permissions
       responses:
         "200":

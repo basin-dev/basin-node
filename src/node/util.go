@@ -39,6 +39,7 @@ func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {
 	}
 	sig, err := b.PrivKey.Sign(rand.Reader, digest, crypto.Hash(0))
 	if err != nil {
+		log.Println("Failed to sign message with private key: ", err.Error())
 		return nil, err
 	}
 	return sig, nil

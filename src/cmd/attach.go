@@ -45,6 +45,8 @@ func RunConsole() {
 		case "quit", "exit":
 			fmt.Println("Exiting session...")
 			return
+		case "up":
+			fmt.Println("Cannot start node from within interactive terminal.")
 		}
 
 		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json

@@ -86,6 +86,29 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	return basin, nil
 }
 
+/* Handle a subscription request. */
+func (b *BasinNode) HandleSubscriptionRequest(ctx context.Context, did string, permissions *[]PermissionJson) error {
+	// TODO: Custom rules for accepting subscription requests so it can be automated
+	url := GetUserDataUrl(b.Did, "producer.requests")
+	requests, err := b.GetRequests(ctx, "producer")
+	if err != nil {
+		log.Println("Failed to read producer.requests: ", err.Error())
+		return err
+	}
+	*requests = append(*requests, (*permissions)...)
+
+	data, err := json.Marshal(requests)
+	if err != nil {
+		log.Println("Failed to marshal requests: ", err.Error())
+		return err
+	}
+	err = b.WriteResource(ctx, url, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /* Sets the given DID and private key to be the current signer for the node */
 // TODO: We eventually want the node to be multi-tenant
 func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
@@ -157,7 +180,6 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 /* The uniform interface for writing to any Basin resource, local or remote */
 func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
 	return adapters.MainAdapter.Write(url, value)
-	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 }
 
 // Working on making the metadata appear...
