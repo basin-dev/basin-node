@@ -31,7 +31,7 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	// Start up the local LevelDB database
 	log.Println("Initializing LevelDB...")
-	db, err := adapters.StartDB()
+	db, err := adapters.StartDB(config.Http)
 	if err != nil {
 		log.Fatal(err)
 	}

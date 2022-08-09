@@ -41,17 +41,17 @@ var doCmd = &cobra.Command{
 		action := args[0]
 		url := args[1]
 
-		cfg := client.NewConfiguration()
-		apiClient := client.NewAPIClient(cfg)
 		ctx := context.Background()
 
 		switch action {
 		case "read":
-			resp, r, err := apiClient.DefaultApi.Read(ctx).Url(url).Execute()
+			resp, r, err := interactiveConfig.ApiClient.DefaultApi.Read(ctx).Url(url).Execute()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
+				fmt.Fprintf(os.Stderr, "Failed to read resource: %s\n", err.Error())
+				return
 			} else if r.StatusCode != 200 {
-				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", r.Status)
+				fmt.Fprintf(os.Stderr, "Failed to read resource: %s\n", r.Status)
+				return
 			}
 			fmt.Fprintln(os.Stdout, resp)
 
@@ -64,6 +64,7 @@ var doCmd = &cobra.Command{
 				Follower FollowerInfo `json:"follower"`
 			}
 
+			log.Println("RESP: ", resp)
 			resp = resp[1 : len(resp)-1] // Have to unquote the string...
 			test := new([]F)
 			data, err := base64.StdEncoding.DecodeString(resp)
@@ -83,7 +84,7 @@ var doCmd = &cobra.Command{
 			}
 			value := args[2]
 			writeReq := client.NewWriteRequest(url, value)
-			resp, r, err := apiClient.DefaultApi.Write(ctx).WriteRequest(*writeReq).Execute()
+			resp, r, err := interactiveConfig.ApiClient.DefaultApi.Write(ctx).WriteRequest(*writeReq).Execute()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
 			} else if r.StatusCode != 200 {

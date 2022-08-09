@@ -52,25 +52,25 @@ func (c *DefaultApiController) Routes() Routes {
 		{
 			"Read",
 			strings.ToUpper("Get"),
-			"/api/v3/read",
+			"/read",
 			c.Read,
 		},
 		{
 			"Register",
 			strings.ToUpper("Post"),
-			"/api/v3/register",
+			"/register",
 			c.Register,
 		},
 		{
 			"Subscribe",
 			strings.ToUpper("Post"),
-			"/api/v3/subscribe",
+			"/subscribe",
 			c.Subscribe,
 		},
 		{
 			"Write",
 			strings.ToUpper("Put"),
-			"/api/v3/write",
+			"/write",
 			c.Write,
 		},
 	}

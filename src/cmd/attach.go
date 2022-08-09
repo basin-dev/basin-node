@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sestinj/basin-node/client"
 	"github.com/spf13/cobra"
 )
 
@@ -81,6 +82,9 @@ var attachCmd = &cobra.Command{
 
 		interactive = true
 		interactiveConfig.Url = httpUrl
+		cfg := client.NewConfiguration()
+		cfg.Servers[0].URL = httpUrl
+		interactiveConfig.ApiClient = client.NewAPIClient(cfg)
 
 		RunConsole()
 

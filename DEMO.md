@@ -1,8 +1,14 @@
 # Demo
 
-## Preparation
+## Authentication
 
 Obtain 2 key method DIDs and their respective base58 private keys from [here](https://did.key.transmute.industries/generate/ed25519). Henceforth referred to as `<DID_1>`, `<DID_2>`, `<PK_1>`, and `<PK_2>`.
+
+Add these DIDs to the local Basin keystore (from `/src`) by twice running
+```bash
+go run . auth add
+```
+and entering the corresponding DID/PK. This demo assumes both passwords are "password".
 
 ## Uvicorn
 
