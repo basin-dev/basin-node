@@ -4,11 +4,78 @@ All URIs are relative to *http://127.0.0.1:8555/api/v3*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**Modify**](DefaultApi.md#Modify) | **Put** /modify | Modify Basin resource
 [**Read**](DefaultApi.md#Read) | **Get** /read | Read Basin resource
 [**Register**](DefaultApi.md#Register) | **Post** /register | Register Basin resource
 [**Subscribe**](DefaultApi.md#Subscribe) | **Post** /subscribe | Request subscription to Basin resource
 [**Write**](DefaultApi.md#Write) | **Put** /write | Write Basin resource
 
+
+
+## Modify
+
+> bool Modify(ctx).WriteRequest(writeRequest).Execute()
+
+Modify Basin resource
+
+
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    writeRequest := *openapiclient.NewWriteRequest("Url_example", string(123)) // WriteRequest | Modify Basin Resource
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.Modify(context.Background()).WriteRequest(writeRequest).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Modify``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `Modify`: bool
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Modify`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiModifyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **writeRequest** | [**WriteRequest**](WriteRequest.md) | Modify Basin Resource | 
+
+### Return type
+
+**bool**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## Read

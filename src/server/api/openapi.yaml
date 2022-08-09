@@ -112,6 +112,31 @@ paths:
         "405":
           description: Validation exception
       summary: Request subscription to Basin resource
+  /modify:
+    put:
+      description: Modify Basin resource
+      operationId: modify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/write_request'
+        description: Modify Basin Resource
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Modify Basin resource
 components:
   schemas:
     PermissionJson:

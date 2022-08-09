@@ -78,6 +78,7 @@ All URIs are relative to *http://127.0.0.1:8555/api/v3*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*DefaultApi* | [**Modify**](docs/DefaultApi.md#modify) | **Put** /modify | Modify Basin resource
 *DefaultApi* | [**Read**](docs/DefaultApi.md#read) | **Get** /read | Read Basin resource
 *DefaultApi* | [**Register**](docs/DefaultApi.md#register) | **Post** /register | Register Basin resource
 *DefaultApi* | [**Subscribe**](docs/DefaultApi.md#subscribe) | **Post** /subscribe | Request subscription to Basin resource

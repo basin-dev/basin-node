@@ -4,6 +4,7 @@ Copyright © 2022 Basin authors@basin.dev
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -26,13 +27,22 @@ var modifyCmd = &cobra.Command{
 	as a consumer or producer.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		mode, _ := cmd.Flags().GetString("mode")
-		entity, _ := cmd.Flags().GetString("entity")
+		// mode, _ := cmd.Flags().GetString("mode")
+		// entity, _ := cmd.Flags().GetString("entity")
 
-		if len(args) < 3 {
+		if !interactive {
+			fmt.Fprintln(os.Stderr, "This command can only be run in interactive mode. Use `basin attach` first.")
+		}
+		url := args[0]
+
+		cfg := client.NewConfiguration()
+		apiClient := client.NewAPIClient(cfg)
+		ctx := context.Background()
+
+		if len(args) < 2 {
 			log.Fatal("Not enough arguments supplied to modify command.")
 		}
-		value := args[2]
+		value := args[1]
 		modifyReq := client.NewModifyRequest(url, value)
 		resp, r, err := apiClient.DefaultApi.Modify(ctx).ModifyRequest(*writeReq).Execute()
 		if err != nil {
@@ -42,24 +52,26 @@ var modifyCmd = &cobra.Command{
 		}
 		fmt.Fprintln(os.Stdout, resp)
 
-		switch mode {
-		case "consumer":
-			switch entity {
-			case "sources":
-				fmt.Println("modify in consumer mode called with sources entity")
+		/*
+			switch mode {
+			case "consumer":
+				switch entity {
+				case "sources":
+					fmt.Println("modify in consumer mode called with sources entity")
+				default:
+					fmt.Println("error: modify in consumer mode must be called with sources entity")
+				}
+			case "producer":
+				switch entity {
+				case "sources":
+					fmt.Println("modify in producer mode called with sources entity")
+				default:
+					fmt.Println("error: modify in producer mode must be called with sources entity")
+				}
 			default:
-				fmt.Println("error: modify in consumer mode must be called with sources entity")
+				fmt.Println("error: modify must be called in either consumer or producer mode with sources entity.")
 			}
-		case "producer":
-			switch entity {
-			case "sources":
-				fmt.Println("modify in producer mode called with sources entity")
-			default:
-				fmt.Println("error: modify in producer mode must be called with sources entity")
-			}
-		default:
-			fmt.Println("error: modify must be called in either consumer or producer mode with sources entity.")
-		}
+		*/
 
 	},
 }

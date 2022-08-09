@@ -147,7 +147,7 @@ paths:
         "405":
           description: Validation exception
       summary: Request subscription to Basin resource
-/modify:
+  /modify:
     put:
       description: Modify Basin resource
       operationId: modify

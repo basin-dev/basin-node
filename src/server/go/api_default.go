@@ -14,11 +14,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // DefaultApiController binds http requests to an api service and writes the service results to the http response
 type DefaultApiController struct {
-	service      DefaultApiServicer
+	service DefaultApiServicer
 	errorHandler ErrorHandler
 }
 
@@ -48,7 +50,13 @@ func NewDefaultApiController(s DefaultApiServicer, opts ...DefaultApiOption) Rou
 
 // Routes returns all the api routes for the DefaultApiController
 func (c *DefaultApiController) Routes() Routes {
-	return Routes{
+	return Routes{ 
+		{
+			"Modify",
+			strings.ToUpper("Put"),
+			"/api/v3/modify",
+			c.Modify,
+		},
 		{
 			"Read",
 			strings.ToUpper("Get"),
@@ -74,6 +82,30 @@ func (c *DefaultApiController) Routes() Routes {
 			c.Write,
 		},
 	}
+}
+
+// Modify - Modify Basin resource
+func (c *DefaultApiController) Modify(w http.ResponseWriter, r *http.Request) {
+	writeRequestParam := WriteRequest{}
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&writeRequestParam); err != nil {
+		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
+		return
+	}
+	if err := AssertWriteRequestRequired(writeRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Modify(r.Context(), writeRequestParam)
+	// If an error occurred, encode the error with the status code
+	if err != nil {
+		c.errorHandler(w, r, err, &result)
+		return
+	}
+	// If no error, encode the body and the result code
+	EncodeJSONResponse(result.Body, &result.Code, w)
+
 }
 
 // Read - Read Basin resource
