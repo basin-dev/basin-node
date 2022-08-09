@@ -75,7 +75,7 @@ func (s *DefaultApiService) Write(ctx context.Context, writeRequest WriteRequest
 
 // Modify - Modify Basin resource
 func (s *DefaultApiService) Modify(ctx context.Context, writeRequest WriteRequest) (ImplResponse, error) {
-	err := node.TheBasinNode.ModifyResource(ctx, writeRequest.Url, []byte(writeRequest.Value))
+	err := node.TheBasinNode.WriteResource(ctx, writeRequest.Url, []byte(writeRequest.Value)) // think I need to change this to Modify (defined in basin_protocol.go)
 	if err != nil {
 		return Response(400, false), nil
 	}

@@ -246,6 +246,8 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	return nil
 }
 
+// I think modify will need a method here?
+
 func (b *BasinNode) GetPermissions(ctx context.Context, dataUrl string) (*[]PermissionJson, error) {
 	url := GetMetadataUrl(dataUrl, Permissions)
 	val, err := b.ReadResource(ctx, url)
