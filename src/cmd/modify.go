@@ -43,8 +43,8 @@ var modifyCmd = &cobra.Command{
 			log.Fatal("Not enough arguments supplied to modify command.")
 		}
 		value := args[1]
-		modifyReq := client.NewModifyRequest(url, value)
-		resp, r, err := apiClient.DefaultApi.Modify(ctx).ModifyRequest(*writeReq).Execute()
+		writeReq := client.NewWriteRequest(url, value)
+		resp, r, err := apiClient.DefaultApi.Modify(ctx).WriteRequest(*writeReq).Execute()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
 		} else if r.StatusCode != 200 {

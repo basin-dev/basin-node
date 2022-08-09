@@ -72,3 +72,12 @@ func (s *DefaultApiService) Write(ctx context.Context, writeRequest WriteRequest
 	}
 	return Response(200, true), nil
 }
+
+// Modify - Modify Basin resource
+func (s *DefaultApiService) Modify(ctx context.Context, writeRequest WriteRequest) (ImplResponse, error) {
+	err := node.TheBasinNode.ModifyResource(ctx, writeRequest.Url, []byte(writeRequest.Value))
+	if err != nil {
+		return Response(400, false), nil
+	}
+	return Response(200, true), nil
+}
