@@ -252,7 +252,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 			log.Println("Error parsing sources file: " + err.Error())
 			return err
 		}
-		srcs = append(srcs, url)
+		srcs = append(srcs, []string{url, adpUrl, permUrl, schemaUrl}...)
 		finalSrcs, err := json.Marshal(srcs)
 		if err != nil {
 			log.Println("Error marshalling sources: " + err.Error())

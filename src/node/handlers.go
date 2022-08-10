@@ -33,8 +33,30 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	log.Println("Stream has requested the following URL: " + string(data.Url))
 
+	// Check permissions: TODO: Should this be done in ReadResource instead, or is that too much overhead for local calls?
+	ctx := context.Background()
+	// permissionsUrl := util.GetMetadataUrl(string(data.Url), util.Permissions)
+	// log.Println("Looking for perms at: ", permissionsUrl)
+
+	// permissionsRaw, err := b.ReadResource(ctx, permissionsUrl)
+	// if err != nil {
+	// 	log.Println("Failed to read permissions for the resource")
+	// 	return
+	// }
+	// var permissions []client.PermissionJson
+	// err = json.Unmarshal(permissionsRaw, &permissions)
+	// if err != nil {
+	// 	log.Println("Error unmarshaling permissions for the resource")
+	// }
+	// // TODO: This is a serious shortcut for the demo!!!!!!!!!
+	// log.Println("Permissions: ", permissions)
+	// if len(permissions) == 0 {
+	// 	log.Println("No access to resource")
+	// 	return
+	// }
+
 	// Get the actual resource
-	resource, err := b.ReadResource(context.Background(), string(data.Url))
+	resource, err := b.ReadResource(ctx, string(data.Url))
 	if err != nil {
 		log.Println("Error reading the requested resource in readReqHandler")
 		return
@@ -149,6 +171,20 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	// TODO: Automatically accepting for the demo
+	// newPs := []client.PermissionJson{{}}
+	// rawP, err := json.Marshal(newPs)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	// err = b.WriteResource(ctx, util.GetMetadataUrl(url, util.Permissions), rawP)
+	// log.Println("wrote newPermissions to: ", util.GetMetadataUrl(url, util.Permissions))
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
 
 	log.Println("Successfully recorded new request")
 }
