@@ -70,7 +70,7 @@ func (s *DefaultApiService) Subscribe(ctx context.Context, subscribeRequest Subs
 		return Response(400, err.Error()), nil
 	}
 
-	return Response(200, "Noted"), nil
+	return Response(200, map[string]interface{}{}), nil
 }
 
 // Write - Write Basin resource

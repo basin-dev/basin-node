@@ -149,6 +149,8 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	log.Println("Successfully recorded new request")
 }
 
 func (b *BasinNode) writeResHandler(s network.Stream) {

@@ -50,7 +50,7 @@ var subscribeCmd = &cobra.Command{
 		} else if r.StatusCode != 200 {
 			fmt.Fprintf(os.Stderr, "Response returned error: %s", r.Status)
 		}
-		fmt.Fprintf(os.Stdout, "Response: %s\n", body)
+		fmt.Fprintf(os.Stdout, "The subscription request has been noted: %s\n", body)
 	},
 }
 
