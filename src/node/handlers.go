@@ -35,6 +35,9 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	// Check permissions: TODO: Should this be done in ReadResource instead, or is that too much overhead for local calls?
 	ctx := context.Background()
+	if !allowed {
+		return
+	}
 	// permissionsUrl := util.GetMetadataUrl(string(data.Url), util.Permissions)
 	// log.Println("Looking for perms at: ", permissionsUrl)
 
@@ -123,6 +126,8 @@ func (b *BasinNode) subResHandler(s network.Stream) {
 	log.Println("NOT YET IMPLEMENTED")
 }
 
+var allowed bool = false
+
 func (b *BasinNode) subReqHandler(s network.Stream) {
 	defer s.Close()
 
@@ -142,6 +147,7 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	}
 
 	// Here is where you call the subscription decider plugin
+	allowed = true
 
 	// Add this request to the list of requests
 	ctx := context.Background()
