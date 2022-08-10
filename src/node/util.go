@@ -5,12 +5,10 @@ import (
 	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
-	"io/ioutil"
 	"log"
 	"strings"
 
 	ggio "github.com/gogo/protobuf/io"
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/sestinj/basin-node/pb"
@@ -18,25 +16,6 @@ import (
 	// "google.golang.org/protobuf/proto"
 	"github.com/gogo/protobuf/proto"
 )
-
-// TODO: Get rid of this. data ends up being nil which throws a veiled error from proto.Unmarshal
-func readProtoMsg[T proto.Message](s network.Stream) (T, error) {
-	var data T
-	buf, err := ioutil.ReadAll(s)
-	if err != nil {
-		log.Println("Failed to read stream: ", err.Error())
-		return data, err
-	}
-
-	err = proto.Unmarshal(buf, data)
-
-	if err != nil {
-		log.Println("Failed to unmarshal stream: ", err.Error())
-		return data, err
-	}
-
-	return data, nil
-}
 
 /* Use the node's current private key to sign the message data and return the signature */
 func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {

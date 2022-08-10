@@ -33,29 +33,41 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	log.Println("Stream has requested the following URL: " + string(data.Url))
 
+	// Get the actual resource
+	resource, err := b.ReadResource(context.Background(), string(data.Url))
+	if err != nil {
+		log.Println("Error reading the requested resource in readReqHandler")
+		return
+	}
+
 	// Sends back the same MessageData.Id so the response can be identified
-	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: nil}
+	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: resource}
 	sig, err := b.signProtoMsg(resp)
 	if err != nil {
 		log.Println(err)
 	}
 	resp.MessageData.Sig = sig
 
-	err = b.sendProtoMsg(s.Conn().RemotePeer(), s.Protocol(), resp)
+	err = b.sendProtoMsg(s.Conn().RemotePeer(), ProtocolReadRes, resp)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 func (b *BasinNode) readResHandler(s network.Stream) {
+	log.Println("New read response stream")
 	defer s.Close()
 
-	log.Println("New read response stream")
-
-	// TODO: Want to get rid of the below function
-	data, err := readProtoMsg[*pb.ReadResponse](s)
+	data := &pb.ReadResponse{}
+	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to read stream: ", err.Error())
+		return
+	}
+
+	err = proto.Unmarshal(buf, data)
+	if err != nil {
+		log.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
@@ -66,7 +78,6 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 	}
 
 	anchor.Ch <- data
-	close(anchor.Ch)
 }
 
 func (b *BasinNode) subResHandler(s network.Stream) {
@@ -74,10 +85,16 @@ func (b *BasinNode) subResHandler(s network.Stream) {
 
 	log.Println("New subscription response stream")
 
-	// TODO: Want to get rid of the below function
-	_, err := readProtoMsg[*pb.SubscriptionResponse](s)
+	data := &pb.SubscriptionResponse{}
+	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to read stream: ", err.Error())
+		return
+	}
+
+	err = proto.Unmarshal(buf, data)
+	if err != nil {
+		log.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
@@ -89,9 +106,16 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 
 	log.Println("New subscription request stream")
 
-	data, err := readProtoMsg[*pb.SubscriptionRequest](s)
+	data := &pb.SubscriptionRequest{}
+	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to read stream: ", err.Error())
+		return
+	}
+
+	err = proto.Unmarshal(buf, data)
+	if err != nil {
+		log.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
