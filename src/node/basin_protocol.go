@@ -157,7 +157,6 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 
 		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 

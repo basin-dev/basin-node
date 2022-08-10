@@ -40,13 +40,11 @@ var subscribeCmd = &cobra.Command{
 
 		permission := client.PermissionJson{Entities: []string{did}, Data: []string{url}, Capabilities: []client.CapabilitySchema{{Action: &action, Expiration: &time}}}
 
-		cfg := client.NewConfiguration()
-		apiClient := client.NewAPIClient(cfg)
 		ctx := context.Background()
 
 		subscribeRequest := client.NewSubscribeRequest([]client.PermissionJson{permission})
 
-		body, r, err := apiClient.DefaultApi.Subscribe(ctx).SubscribeRequest(*subscribeRequest).Execute()
+		body, r, err := interactiveConfig.ApiClient.DefaultApi.Subscribe(ctx).SubscribeRequest(*subscribeRequest).Execute()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to subscribe to resource: %s", err.Error())
 		} else if r.StatusCode != 200 {

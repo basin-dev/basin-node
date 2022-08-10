@@ -3,12 +3,14 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/sestinj/basin-node/pb"
 	. "github.com/sestinj/basin-node/structs"
 	"github.com/sestinj/basin-node/util"
+	"google.golang.org/protobuf/proto"
 )
 
 func (b *BasinNode) readReqHandler(s network.Stream) {
@@ -16,9 +18,16 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	log.Println("Recieved new read stream")
 
-	data, err := readProtoMsg[*pb.ReadRequest](s)
+	data := &pb.ReadRequest{}
+	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to read stream: ", err.Error())
+		return
+	}
+
+	err = proto.Unmarshal(buf, data)
+	if err != nil {
+		log.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
@@ -43,6 +52,7 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 
 	log.Println("New read response stream")
 
+	// TODO: Want to get rid of the below function
 	data, err := readProtoMsg[*pb.ReadResponse](s)
 	if err != nil {
 		log.Println(err)
@@ -64,6 +74,7 @@ func (b *BasinNode) subResHandler(s network.Stream) {
 
 	log.Println("New subscription response stream")
 
+	// TODO: Want to get rid of the below function
 	_, err := readProtoMsg[*pb.SubscriptionResponse](s)
 	if err != nil {
 		log.Println(err)

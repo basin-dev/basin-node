@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	HostRouter Router
+	HostRouter HardcodedRouter // TODO: This cannot stay
 )
 
 /*
@@ -79,11 +79,11 @@ func (k KademliaRouter) RegisterUrl(ctx context.Context, url string) error {
 
 /* Instantiate a Router instance */
 func StartKademliaRouter(ctx context.Context, h libp2p_host.Host) (Router, error) {
-	dht, err := kademlia.New(ctx, h)
+	_, err := kademlia.New(ctx, h)
 	if err != nil {
 		return nil, err
 	}
 
-	HostRouter = KademliaRouter{dht: dht, host: h}
+	// HostRouter = KademliaRouter{dht: dht, host: h}
 	return HostRouter, nil
 }

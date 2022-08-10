@@ -12,9 +12,9 @@ and entering the corresponding DID/PK. This demo assumes both passwords are "pas
 
 ## Uvicorn
 
-Start data server (from `testing/`)
+Start data server (from `testing/`, make sure venv is started)
 ```bash
-testing % uvicorn main:app --reload
+uvicorn main:app --reload
 ```
 
 ## Node 1
