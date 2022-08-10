@@ -3,3 +3,8 @@ UNCOMMENT HERE TO ALLOW TAILWINDCSS AND DAISYUI
 @tailwind base;
 @tailwind components;
 @tailwind utilities; */
+body {
+    background-color: #9ab89b;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
