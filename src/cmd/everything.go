@@ -14,7 +14,6 @@ import (
 	"github.com/sestinj/basin-node/adapters"
 	. "github.com/sestinj/basin-node/node"
 	server "github.com/sestinj/basin-node/server/go"
-	"github.com/sestinj/basin-node/util"
 )
 
 func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
@@ -34,12 +33,10 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	// Start up the local LevelDB database
 	log.Println("Initializing LevelDB...")
-	db, err := adapters.StartDB(config.Http)
+	_, err := adapters.StartDB(config.Http)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	util.StartLocalOnlyDb(db, "/local/")
 
 	// Start the BasinNode (libp2p host with associated protocol, stream handler)
 	log.Println("Launching Basin Node...")

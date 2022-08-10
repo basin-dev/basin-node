@@ -56,6 +56,8 @@ func (c *BasinNodeConfig) SetDefaults() {
 }
 
 func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
+	ctx := context.Background()
+
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
@@ -72,12 +74,22 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	basin.LoadPrivateKey(config.Did, config.Pw)
 
 	// Initialize necessary files TODO: Some more though here
+	requestsUrl := GetUserDataUrl(basin.Did, "producer.requests")
+	requests, err := json.Marshal([]client.PermissionJson{})
+	if err != nil {
+		log.Fatal("Couldn't initialize requests file: " + err.Error())
+	}
+	err = basin.WriteResource(ctx, requestsUrl, requests)
+	if err != nil {
+		log.Fatal("Failed to write requests file: " + err.Error())
+	}
+
 	sourcesUrl := GetUserDataUrl(basin.Did, "producer.sources")
-	sources, err := json.Marshal([]string{"basin://test"})
+	sources, err := json.Marshal([]string{"basin://test", sourcesUrl, requestsUrl})
 	if err != nil {
 		log.Fatal("Couldn't initialize files: " + err.Error())
 	}
-	err = LocalOnlyDb.Write(sourcesUrl, sources)
+	err = basin.WriteResource(ctx, sourcesUrl, sources)
 	if err != nil {
 		log.Fatal("Failed to write sources file: " + err.Error())
 	}
@@ -126,9 +138,9 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 	// Get list of sources on this node (can't call GetSources for infinite loop)
 	// TODO: Should be using something more efficient so we don't have to search over whole array
 	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
-	data, err := LocalOnlyDb.Read(srcsUrl)
+	data, err := adapters.MainAdapter.Read(srcsUrl)
 	if err != nil {
-		log.Println("Failed to read sources from LocalOnlyDb: ", err.Error())
+		log.Println("Failed to read sources file: ", err.Error())
 		return nil, err
 	}
 	srcs := Unmarshal[[]string](data)
@@ -233,7 +245,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// SOURCES
 	sourcesUrl := GetUserDataUrl(b.Did, "producer.sources")
 	g.Go(func() error {
-		currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
+		currSrcs, err := adapters.MainAdapter.Read(sourcesUrl)
 		var srcs []string
 		err = json.Unmarshal(currSrcs, &srcs)
 		if err != nil {
@@ -246,9 +258,8 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 			log.Println("Error marshalling sources: " + err.Error())
 			return err
 		}
-		// TODO: Should this be written to the LocalAdapter instead of LocalOnlyDb??
-		// return b.WriteResource(ctx, sourcesUrl, finalSrcs)
-		return LocalOnlyDb.Write(sourcesUrl, finalSrcs)
+
+		return adapters.MainAdapter.Write(sourcesUrl, finalSrcs)
 	})
 
 	if err := g.Wait(); err != nil {

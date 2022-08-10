@@ -40,8 +40,6 @@ func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
 		return LOCAL_ADAPTER_CONFIG, nil
 	} else if strings.HasPrefix(parsed.Domain, "meta."+util.Permissions.String()) {
 		return LOCAL_ADAPTER_CONFIG, nil
-	} else if strings.HasPrefix(parsed.Domain, "meta.producer.requests") {
-		return LOCAL_ADAPTER_CONFIG, nil
 	} else if strings.HasPrefix(parsed.Domain, "meta.") {
 		log.Printf("Unknown meta prefix in URL '%s'", parsed.Domain)
 		return adapterCfg, errors.New("Unknown meta prefix")
