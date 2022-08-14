@@ -35,9 +35,6 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	// Check permissions: TODO: Should this be done in ReadResource instead, or is that too much overhead for local calls?
 	ctx := context.Background()
-	if !allowed {
-		return
-	}
 	// permissionsUrl := util.GetMetadataUrl(string(data.Url), util.Permissions)
 	// log.Println("Looking for perms at: ", permissionsUrl)
 
@@ -62,6 +59,9 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 	resource, err := b.ReadResource(ctx, string(data.Url))
 	if err != nil {
 		log.Println("Error reading the requested resource in readReqHandler")
+		return
+	}
+	if !allowed {
 		return
 	}
 
