@@ -1,5 +1,9 @@
 <script lang="ts">
-    import "../app.css";
+    import TopBar from "@lib/TopBar.svelte";
+import "../app.css";
 </script>
 
-<slot></slot>
+<div>
+    <TopBar></TopBar>
+    <div class="p-8"><slot></slot></div>
+</div>

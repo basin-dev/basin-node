@@ -12,17 +12,16 @@ export class BasinSDK {
     async read(url: string): Promise<any> {
         let fullUrl = `${this.gatewayUrl}/read?url=${encodeURIComponent(url)}`;
         let resp = await fetch(fullUrl, {
-            method: "GET",
-            mode: "no-cors",
-            headers: {
-                'Access-Control-Allow-Origin':'*',
-                "Access-Control-Allow-Methods": "GET, OPTIONS, POST, PUT"
-            }
+            method: "GET"
         });
-        if (typeof window !== "undefined") return;
+        let str: string;
         let base64 = await resp.json();
-        let buffer = Buffer.from(base64, "base64");
-        return buffer.toString();
+        if (typeof window !== "undefined") {
+            str = atob(base64);
+        } else {
+            str = Buffer.from(base64, "base64").toString();
+        }
+        return JSON.parse(str);
     };
     // write: (url: string, val: any) => Promise<boolean>;
 }

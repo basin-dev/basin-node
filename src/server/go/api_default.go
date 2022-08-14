@@ -56,6 +56,12 @@ func (c *DefaultApiController) Routes() Routes {
 			c.Read,
 		},
 		{
+			"ReadCors",
+			strings.ToUpper("Options"),
+			"/read",
+			c.ReadCors,
+		},
+		{
 			"Register",
 			strings.ToUpper("Post"),
 			"/register",
@@ -81,6 +87,19 @@ func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	urlParam := query.Get("url")
 	result, err := c.service.Read(r.Context(), urlParam)
+	// If an error occurred, encode the error with the status code
+	if err != nil {
+		c.errorHandler(w, r, err, &result)
+		return
+	}
+	// If no error, encode the body and the result code
+	EncodeJSONResponse(result.Body, &result.Code, w)
+
+}
+
+// ReadCors -
+func (c *DefaultApiController) ReadCors(w http.ResponseWriter, r *http.Request) {
+	result, err := c.service.ReadCors(r.Context())
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)

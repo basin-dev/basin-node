@@ -114,6 +114,16 @@ paths:
         "400":
           description: Error
       summary: Read Basin resource
+    options:
+      description: Preflight options
+      operationId: read-cors
+      responses:
+        "200":
+          description: Successful preflight
+          content:
+            application/json:
+              schema:
+                type: string
   /subscribe:
     post:
       description: Request subscription to Basin resource

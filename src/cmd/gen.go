@@ -33,7 +33,7 @@ var genCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Retrieve the schema
-		url := util.GetMetadataUrl(dataUrl, "schema")
+		url := util.GetMetadataUrl(dataUrl, util.Schema)
 		resp, r, err := interactiveConfig.ApiClient.DefaultApi.Read(ctx).Url(url).Execute()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to read resource: %s\n", err.Error())

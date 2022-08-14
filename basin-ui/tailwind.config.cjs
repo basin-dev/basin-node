@@ -2,7 +2,11 @@
 module.exports = {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        "basin-green": "var(--basin-green)"
+      }
+    },
   },
-  plugins: [require("daisyui")],
+  plugins: [],
 }

@@ -12,7 +12,9 @@ package server
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net/http"
 
 	"github.com/sestinj/basin-node/client"
 	"github.com/sestinj/basin-node/node"
@@ -80,4 +82,15 @@ func (s *DefaultApiService) Write(ctx context.Context, writeRequest WriteRequest
 		return Response(400, false), nil
 	}
 	return Response(200, true), nil
+}
+
+// ReadCors -
+func (s *DefaultApiService) ReadCors(ctx context.Context) (ImplResponse, error) {
+	// TODO - update ReadCors with the required logic for this service method.
+	// Add api_default_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+
+	//TODO: Uncomment the next line to return response Response(200, string{}) or use other options such as http.Ok ...
+	//return Response(200, string{}), nil
+
+	return Response(http.StatusNotImplemented, nil), errors.New("ReadCors method not implemented")
 }
