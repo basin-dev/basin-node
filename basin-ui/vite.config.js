@@ -7,7 +7,8 @@ const config = {
 	resolve: {
 		alias: {
 			'@sdk': path.resolve('./src/basin-sdk'),
-			'@lib': path.resolve('./src/lib')
+			'@lib': path.resolve('./src/lib'),
+			'@util': path.resolve('./src/util')
 		}
 	}
 };
