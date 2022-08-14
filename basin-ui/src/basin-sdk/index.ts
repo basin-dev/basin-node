@@ -1,6 +1,8 @@
 /** The Basin SDK lets web developers retrieve Basin resources as easily as with fetch. It also has capabilities for type generation. */
 /** Later...the SDK should be able to optionally submit appeals if an object with wrong schema (or nothing at all) is returned. */
 
+import { getMetadataUrl } from "./helpers";
+
 export class BasinSDK {
     /** The HTTP(S) URL of the node you are using as a gateway to the network. */
     gatewayUrl: string;
@@ -9,7 +11,7 @@ export class BasinSDK {
     }
 
     /** Read a Basin resource by URL. If you are not subscribed you can do so automatically. */
-    async read(url: string): Promise<any> {
+    async _read(url: string): Promise<any> {
         let fullUrl = `${this.gatewayUrl}/read?url=${encodeURIComponent(url)}`;
         let resp = await fetch(fullUrl, {
             method: "GET"
@@ -23,6 +25,18 @@ export class BasinSDK {
         }
         return JSON.parse(str);
     };
+
+     /** Read a Basin resource by URL. If you are not subscribed you can do so automatically. */
+    async read(url: string): Promise<any> {
+        return this._read(url);
+    };
+
+    /** Read metadata for a Basin resource by URL. If you are not subscribed you can do so automatically. */
+    async readMetadata(dataUrl: string, prefix: string): Promise<any> {
+        let url = getMetadataUrl(dataUrl, prefix);
+        return this._read(url);
+    }
+
     // write: (url: string, val: any) => Promise<boolean>;
 }
 
