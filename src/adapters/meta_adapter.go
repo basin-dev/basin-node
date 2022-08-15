@@ -43,13 +43,11 @@ func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
 		return adapterCfg, fmt.Errorf("Unknown meta prefix in URL '%s'", parsed.Domain)
 	}
 
-	// TODO: For now, bottoming out with user data (basin.producer....) files, but want to probably register them in the same way instead. See below
 	if strings.HasPrefix(parsed.Domain, "basin") {
 		return LOCAL_ADAPTER_CONFIG, nil
 	}
 
-	// TODO: TODO: TODO: When a file is written, should it's adapter info always be written (unless it's an adapter file?? This is getting ugly fast...)
-	// TODO: Question you need to answer rn is whether there should exist a meta.adapter.basin.producer.sources file from the start, or if you should assume that basin.producer.sources is automatically local. What files should be local? Wouldn't we want to register this like anything else?
+	// TODO[ARCH][2]: Create adapter files for permissions, schema, and sources (not adapter) when you create them in Register() and StartBasinNode() respectively.
 
 	url := util.GetMetadataUrl(dataUrl, util.Adapter)
 	bytes, err := LocalAdapter.Read(url)
@@ -75,7 +73,7 @@ func selectAdapter(url string) (Adapter, error) {
 	case "http":
 		return httpAdapter, nil
 	default:
-		// TODO: Adapter plugins
+		// TODO[FEATURE][1]: Adapter plugins
 		return nil, fmt.Errorf("Unknown adapter name '%s'", cfg.AdapterName)
 	}
 }

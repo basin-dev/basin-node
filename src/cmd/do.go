@@ -78,7 +78,7 @@ var doCmd = &cobra.Command{
 			}
 			s, _ := PrettyStruct(test)
 			fmt.Println(s)
-			// TODO: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
+			// FIXME[base64][2]: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		case "write":
 			if len(args) < 3 {
 				log.Error.Fatal("Not enough arguments supplied to write command.")

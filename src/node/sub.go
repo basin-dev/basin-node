@@ -10,7 +10,7 @@ import (
 
 /* This is where the logic happens for a subscription request */
 func (b *BasinNode) RequestSubscriptions(ctx context.Context, permissions []client.PermissionJson) error {
-	// TODO: Only going to request first URL for now.
+	// TODO[ucan][1]: Only going to request first URL for now.
 	pi, err := HostRouter.ResolvePeer(ctx, (permissions)[0].Data[0])
 	if err != nil {
 		return err
@@ -18,7 +18,7 @@ func (b *BasinNode) RequestSubscriptions(ctx context.Context, permissions []clie
 
 	var permissionsProto []*pb.Permission
 	for _, permission := range permissions {
-		var capabilities []*pb.Capability // TODO: : ( Again...need a single source for types...why do I even have to write this function? Should be abstracted much better.
+		var capabilities []*pb.Capability // FIXME[typegen][2]: : ( Again...need a single source for types...why do I even have to write this function? Should be abstracted much better.
 		for _, capability := range permission.Capabilities {
 			capabilities = append(capabilities, &pb.Capability{Action: *capability.Action, Expiration: capability.Expiration.String()})
 		}

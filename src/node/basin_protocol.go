@@ -25,7 +25,6 @@ type ReadReqAnchor struct {
 	Ch  chan *pb.ReadResponse
 }
 
-/* TODO: All plugins should be here. There should be a Router(s?) and Adapter (for the metadata whose configuration includes the other adapters.) field */
 type BasinNode struct {
 	Host         host.Host
 	ReadRequests map[string]*ReadReqAnchor
@@ -38,8 +37,6 @@ const ProtocolReadReq = "/basin/readreq/1.0.0"
 const ProtocolReadRes = "/basin/readres/1.0.0"
 const ProtocolSubReq = "/basin/subreq/1.0.0"
 const ProtocolSubRes = "/basin/subres/1.0.0"
-
-// TODO: ProtocolWriteReq/Res and associated handlers
 
 var (
 	TheBasinNode *BasinNode // Is this sus?
@@ -102,7 +99,7 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 
 /* Handle a subscription request. */
 func (b *BasinNode) HandleSubscriptionRequest(ctx context.Context, did string, permissions *[]PermissionJson) error {
-	// TODO: Custom rules for accepting subscription requests so it can be automated
+	// TODO[FEATURE][1]: Custom rules for accepting subscription requests so it can be automated
 	url := GetUserDataUrl(b.Did, "producer.requests")
 	requests, err := b.GetRequests(ctx, "producer")
 	if err != nil {
@@ -122,7 +119,7 @@ func (b *BasinNode) HandleSubscriptionRequest(ctx context.Context, did string, p
 }
 
 /* Sets the given DID and private key to be the current signer for the node */
-// TODO: We eventually want the node to be multi-tenant
+// TODO[FEATURE][1]: We eventually want the node to be multi-tenant
 func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 	priv, err := didutil.ReadKeystore(did, pw)
 	if err != nil {
@@ -136,7 +133,7 @@ func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 /* The uniform interface for retrieving any Basin resource, local or remote */
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
 	// Get list of sources on this node (can't call GetSources for infinite loop)
-	// TODO: Should be using something more efficient so we don't have to search over whole array
+	// TODO[PERF][1]: Should be using something more efficient so we don't have to search over whole array
 	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
 	data, err := adapters.MainAdapter.Read(srcsUrl)
 	if err != nil {
@@ -147,7 +144,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 	if Contains(*srcs, url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
-		return adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
+		return adapters.MainAdapter.Read(url)
 	} else {
 		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
@@ -155,9 +152,6 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 			return nil, err
 		}
 
-		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
-		// Big problem with using HTTP is you have to have the ip4 multiaddr protocol for the node. Missing out on a lot of opportunities.
-		// This is actually a huge problem, because not all nodes should have to have a domain, and their IP addresses will change, so the entry in the DHT will be outdated.
 		req := &pb.ReadRequest{Url: url, MessageData: b.newMessageData(uuid.New().String())}
 		sig, err := b.signProtoMsg(req)
 		if err != nil {
@@ -178,7 +172,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		log.Info.Println("Waiting for response to id " + req.MessageData.Id)
 
 		// Wait for the response to come back through the channel.
-		// TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
+		// TODO[DEV_FEAT][1]: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
 		res := <-resCh
 		log.Info.Println("Recieved response for request id " + res.MessageData.Id)
 
@@ -199,8 +193,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
 	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
 
-	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
-	// This is when we want to start storing things as actual files? Just start thinking about it.
+	// TODO[PERF][2]: Note that right here we just loaded a file from the filesystem and threw it into LevelDB. There's zero reason to be doing this. Put it in the ~/.basin folder
 
 	// Run all the file writes in parallel
 
@@ -229,7 +222,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// ADAPTER CONFIG
 	adpUrl := GetMetadataUrl(url, Adapter)
 	g.Go(func() error {
-		// TODO: Again you're causing problems not having a source of truth for type generation :((((
+		// FIXME[typegen][2]: Again you're causing problems not having a source of truth for type generation :((((
 		adpRaw, err := json.Marshal(adapter)
 		if err != nil {
 			return fmt.Errorf("Error marshalling adapter file: %w\n", err)

@@ -34,7 +34,7 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 
 	log.Info.Println("Stream has requested the following URL: " + string(data.Url))
 
-	// Check permissions: TODO: Should this be done in ReadResource instead, or is that too much overhead for local calls?
+	// TODO[ucan][2]: Implement permissions!!! UCANS! Should this be done in ReadResource instead, or is that too much overhead for local calls?
 	ctx := context.Background()
 	// permissionsUrl := util.GetMetadataUrl(string(data.Url), util.Permissions)
 	// log.Println("Looking for perms at: ", permissionsUrl)
@@ -49,7 +49,6 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 	// if err != nil {
 	// 	log.Println("Error unmarshaling permissions for the resource")
 	// }
-	// // TODO: This is a serious shortcut for the demo!!!!!!!!!
 	// log.Println("Permissions: ", permissions)
 	// if len(permissions) == 0 {
 	// 	log.Println("No access to resource")
@@ -179,7 +178,7 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 		log.Warning.Println(err)
 	}
 
-	// TODO: Automatically accepting for the demo
+	// TODO[ucan][2]: Automatically accepting for the demo. Also don't want to just search the file like the below. Use UCANs
 	// newPs := []client.PermissionJson{{}}
 	// rawP, err := json.Marshal(newPs)
 	// if err != nil {

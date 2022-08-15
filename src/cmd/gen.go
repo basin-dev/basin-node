@@ -49,7 +49,7 @@ var genCmd = &cobra.Command{
 		switch action {
 		case "types:ts":
 			//
-			// TODO: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
+			// FIXME[base64][2]: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		default:
 			log.Error.Fatal("Unknown action: ", action)
 		}

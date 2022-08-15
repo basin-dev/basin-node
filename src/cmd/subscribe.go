@@ -21,7 +21,7 @@ var subscribeCmd = &cobra.Command{
 	Long: `Request subscription to a resource. Input the necessary metadata, including
 	- permissions`,
 	Run: func(cmd *cobra.Command, args []string) {
-		action, err := cmd.Flags().GetString("action") // TODO: Should be able to specify multiple actions like `--action read --action write`.
+		action, err := cmd.Flags().GetString("action") // TODO[FEATURE][1]: Should be able to specify multiple actions like `--action read --action write`.
 		url := args[0]
 		did := args[1]
 		if err != nil {
@@ -34,9 +34,9 @@ var subscribeCmd = &cobra.Command{
 		// 	fmt.Fprintf(os.Stderr, "Could not read file: %s", err.Error())
 		// }
 
-		// TODO: flag for expiration
+		// TODO[FEATURE][1]: flag for expiration
 		time := time.Now().Add(time.Hour * 24 * 365 * 10)
-		// TODO: Should also be able to just specify a permissions file
+		// TODO[FEATURE][1]: Should also be able to just specify a permissions file
 
 		permission := client.PermissionJson{Entities: []string{did}, Data: []string{url}, Capabilities: []client.CapabilitySchema{{Action: &action, Expiration: &time}}}
 

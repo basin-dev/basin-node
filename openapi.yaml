@@ -109,7 +109,7 @@ paths:
             application/json:
               schema:
                 type: string
-                format: bytes # TODO: Should this be binary or bytes? The corresponding go types generated are *os.File and string. This might be why you're getting a base64 string
+                format: bytes # FIXME[base64][2]: Should this be binary or bytes? The corresponding go types generated are *os.File and string. This might be why you're getting a base64 string
           description: successful operation
         "400":
           description: Error

@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Data that is included in every message; TODO: Include some more stuff: https://github.com/libp2p/go-libp2p/blob/master/examples/multipro/pb/p2p.proto
+// Data that is included in every message; TODO[FEATURE][1]: Include some more stuff: https://github.com/libp2p/go-libp2p/blob/master/examples/multipro/pb/p2p.proto
 type MessageData struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

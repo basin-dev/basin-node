@@ -47,47 +47,6 @@ func authorizeAction(url string, action string, did string, db *leveldb.DB) bool
 	return false
 }
 
-func getPermissions(url string, db *leveldb.DB) *[]PermissionJson {
-	data, err := db.Get([]byte(url), nil)
-	if err != nil {
-		handleErr(err, LogFatal)
-	}
-
-	permissions := new([]PermissionJson)
-	json.Unmarshal(data, permissions)
-
-	return permissions
-}
-
-func readData(url string, did string, db *leveldb.DB) []byte {
-	if !authorizeAction(url, "read", did, db) {
-		return false
-	}
-
-	val, err := db.Get([]byte(url), nil) // TODO - Call the HTTP URL that implements the Basin Interface
-	if err != nil {
-		return false // TODO: Need some way to propogate errors
-	}
-
-	return val
-}
-
-func writeData(url string, value []byte, did string, db *leveldb.DB) bool {
-	if !authorizeAction(url, "write", did, db) {
-		return false
-	}
-
-	// TODO: Validate with schema
-
-	err := db.Put([]byte(url), value, nil) // TODO: Again, call HTTP URL, Basin Interface, blah, blah
-
-	if err != nil {
-		return false
-	}
-
-	return true
-}
-
 func addPermission(permission PermissionJson, db *leveldb.DB) {
 	batch := new(leveldb.Batch)
 	for _, url := range permission.Data {
@@ -122,11 +81,10 @@ func addPermission(permission PermissionJson, db *leveldb.DB) {
 	handleErr(err, Panic)
 }
 
-// TODO
-func registerSchema(url string, schema []byte, did string, db *leveldb.DB) { // TODO: Should both db and did be made a part of the ctx, or of some other shared object passed everywhere?
+func registerSchema(url string, schema []byte, did string, db *leveldb.DB) {
 	schemaUrl := getMetadataUrl(url, "schema")
 
-	// 1. TODO: Make sure did owns the domain
+	// 1. Make sure did owns the domain
 
 	// 2. Check whether a schema already exists at this domain. If so, version it.
 	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
@@ -158,7 +116,6 @@ type Notification struct {
 	SenderID string
 }
 
-// TODO
 // Do we want some append only record of when updates happen?
 // When new data, send a message to all subscribers of the URL of the form described above
 func registerDataUpdate(url string, db *leveldb.DB) {
@@ -183,7 +140,6 @@ type Request struct {
 	// I'm pretty sure HTTP deals with the whole concept of request IDs, so why not use it?
 }
 
-// TODO - is this supposed to be subscribe function?
 func requestResource(url string) []byte {
 	// Since it will be stored on the source node, need to find that node and request
 	// Find via IP/DNS? But can URL Schemes other than http be resolved?

@@ -33,7 +33,7 @@ func decodePublicKey(multibaseVal string, options string) (decodedPublicKey, err
 	if enc != 'z' {
 		return pub, fmt.Errorf("Multibase prefix is invalid: should be z (base58 BTC)")
 	}
-	pub.MulticodecValue = enc // TODO: WHAT IS THE HEADER?!?!?!?!? https://w3c-ccg.github.io/did-method-key/#decode-public-key-algorithm:~:text=decodedPublicKey%20to%20an%20empty%20object.-,Decode%20multibaseValue%20using%20the%20base58%2Dbtc%20multibase%20alphabet%20and%20set%20multicodecValue%20to%20the%20multicodec%20header%20for%20the%20decoded%20value.%20Implementers%20are%20cautioned%20to%20ensure%20that%20the%20multicodecValue%20is%20set%20to%20the%20result%20after%20performing%20varint%20decoding.,-Set%20the%20rawPublicKeyBytes%20to%20the
+	pub.MulticodecValue = enc // WHAT IS THE HEADER?!?!?!?!? https://w3c-ccg.github.io/did-method-key/#decode-public-key-algorithm:~:text=decodedPublicKey%20to%20an%20empty%20object.-,Decode%20multibaseValue%20using%20the%20base58%2Dbtc%20multibase%20alphabet%20and%20set%20multicodecValue%20to%20the%20multicodec%20header%20for%20the%20decoded%20value.%20Implementers%20are%20cautioned%20to%20ensure%20that%20the%20multicodecValue%20is%20set%20to%20the%20result%20after%20performing%20varint%20decoding.,-Set%20the%20rawPublicKeyBytes%20to%20the
 	pub.RawPublicKeyBytes = data
 	return pub, nil
 }
@@ -83,7 +83,7 @@ func (k KeyResolver) Resolve(did string) ([]byte, error) {
 
 	withFrag := fmt.Sprintf("%s#%s", did, key)
 
-	// TODO: This is a cheap way of doing this...finish the above functions
+	// TODO[LIBRARY][1]: This is a cheap way of doing this...finish the above functions
 	rawJson := fmt.Sprintf(`{
 		"@context": [
 		  "https://www.w3.org/ns/did/v1",
