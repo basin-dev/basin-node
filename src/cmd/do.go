@@ -56,28 +56,12 @@ var doCmd = &cobra.Command{
 			}
 			fmt.Fprintln(os.Stdout, resp)
 
-			type FollowerInfo struct {
-				AccountId string `json:"accountId"`
-				UserLink  string `json:"userLink"`
-			}
-
-			type F struct {
-				Follower FollowerInfo `json:"follower"`
-			}
-
-			log.Info.Println("RESP: ", resp)
 			resp = resp[1 : len(resp)-1] // Have to unquote the string...
-			test := new([]F)
 			data, err := base64.StdEncoding.DecodeString(resp)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Couldn't hex.decodestring :(: %s\n", err.Error())
 			}
-			err = json.Unmarshal(data, test)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "FAILURE :(: %s\n", err.Error())
-			}
-			s, _ := PrettyStruct(test)
-			fmt.Println(s)
+			fmt.Println(string(data))
 			// FIXME[base64][2]: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		case "write":
 			if len(args) < 3 {

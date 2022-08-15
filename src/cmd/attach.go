@@ -34,6 +34,8 @@ func RunConsole() {
 	\____/\_| |_/\____/ \___/\_| \_/
 	`)
 
+	lastInput := []string{}
+
 	for {
 		input := strings.Split(GetInput(PROMPT, reader), " ")
 
@@ -47,6 +49,8 @@ func RunConsole() {
 			return
 		case "up":
 			fmt.Println("Cannot start node from within interactive terminal.")
+		case "retry":
+			input = lastInput
 		}
 
 		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
@@ -67,6 +71,8 @@ func RunConsole() {
 		}
 
 		command.Run(command, args)
+
+		lastInput = input
 	}
 }
 
