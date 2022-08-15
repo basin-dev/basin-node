@@ -28,7 +28,8 @@
  <div class="flex">
     <a class="m-auto" href="/producer"><Button>Producer Dashboard &#8594</Button></a>
     <a class="m-auto" href="/consumer"><Button>Consumer Dashboard &#8594</Button></a>
-</div>
+    <a class="m-auto" href="/explore"><Button>Explore Basin &#8594</Button></a>
+  </div>
 <br>
 
  <pre class="w-full">
