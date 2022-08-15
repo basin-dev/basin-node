@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/json"
-	"log"
+	"fmt"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sestinj/basin-node/adapters"
 	"github.com/sestinj/basin-node/client"
 	didutil "github.com/sestinj/basin-node/did"
@@ -23,21 +26,19 @@ type ReadReqAnchor struct {
 	Ch  chan *pb.ReadResponse
 }
 
-/* TODO: All plugins should be here. There should be a Router(s?) and Adapter (for the metadata whose configuration includes the other adapters.) field */
 type BasinNode struct {
 	Host         host.Host
 	ReadRequests map[string]*ReadReqAnchor
 	Did          string
 	PrivKey      ed25519.PrivateKey
 	Http         string
+	Pubsub       *pubsub.PubSub
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
 const ProtocolReadRes = "/basin/readres/1.0.0"
 const ProtocolSubReq = "/basin/subreq/1.0.0"
 const ProtocolSubRes = "/basin/subres/1.0.0"
-
-// TODO: ProtocolWriteReq/Res and associated handlers
 
 var (
 	TheBasinNode *BasinNode // Is this sus?
@@ -55,13 +56,15 @@ func (c *BasinNodeConfig) SetDefaults() {
 	}
 }
 
-func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
+func StartBasinNode(config BasinNodeConfig) (*BasinNode, error) {
+	ctx := context.Background()
+
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
 	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http}
 	if err != nil {
-		return basin, err
+		return &basin, err
 	}
 
 	h.SetStreamHandler(ProtocolReadReq, basin.readReqHandler)
@@ -72,22 +75,53 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	basin.LoadPrivateKey(config.Did, config.Pw)
 
 	// Initialize necessary files TODO: Some more though here
-	sourcesUrl := GetUserDataUrl(basin.Did, "producer.sources")
-	sources, err := json.Marshal([]string{"basin://test"})
+	requestsUrl := GetUserDataUrl(basin.Did, "producer.requests")
+	requests, err := json.Marshal([]client.PermissionJson{})
 	if err != nil {
-		log.Fatal("Couldn't initialize files: " + err.Error())
+		log.Error.Fatal("Couldn't initialize requests file: " + err.Error())
 	}
-	err = LocalOnlyDb.Write(sourcesUrl, sources)
+	err = basin.WriteResource(ctx, requestsUrl, requests)
 	if err != nil {
-		log.Fatal("Failed to write sources file: " + err.Error())
+		log.Error.Fatal("Failed to write requests file: " + err.Error())
+	}
+
+	sourcesUrl := GetUserDataUrl(basin.Did, "producer.sources")
+	sources, err := json.Marshal([]string{"basin://test", sourcesUrl, requestsUrl})
+	if err != nil {
+		log.Error.Fatal("Couldn't initialize files: " + err.Error())
+	}
+	err = basin.WriteResource(ctx, sourcesUrl, sources)
+	if err != nil {
+		log.Error.Fatal("Failed to write sources file: " + err.Error())
 	}
 
 	TheBasinNode = &basin
-	return basin, nil
+	return &basin, nil
+}
+
+/* Handle a subscription request. */
+func (b *BasinNode) HandleSubscriptionRequest(ctx context.Context, did string, permissions *[]PermissionJson) error {
+	// TODO[FEATURE][1]: Custom rules for accepting subscription requests so it can be automated
+	url := GetUserDataUrl(b.Did, "producer.requests")
+	requests, err := b.GetRequests(ctx, "producer")
+	if err != nil {
+		return fmt.Errorf("Failed to read producer.requests: %w\n", err)
+	}
+	*requests = append(*requests, (*permissions)...)
+
+	data, err := json.Marshal(requests)
+	if err != nil {
+		return fmt.Errorf("Failed to marshal requests: %w\n", err)
+	}
+	err = b.WriteResource(ctx, url, data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /* Sets the given DID and private key to be the current signer for the node */
-// TODO: We eventually want the node to be multi-tenant
+// TODO[FEATURE][1]: We eventually want the node to be multi-tenant
 func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 	priv, err := didutil.ReadKeystore(did, pw)
 	if err != nil {
@@ -101,39 +135,34 @@ func (b *BasinNode) LoadPrivateKey(did string, pw string) error {
 /* The uniform interface for retrieving any Basin resource, local or remote */
 func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error) {
 	// Get list of sources on this node (can't call GetSources for infinite loop)
-	// TODO: Should be using something more efficient so we don't have to search over whole array
+	// TODO[PERF][1]: Should be using something more efficient so we don't have to search over whole array
 	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
-	data, err := LocalOnlyDb.Read(srcsUrl)
+	data, err := adapters.MainAdapter.Read(srcsUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to read source file: %w\n", err)
 	}
 	srcs := Unmarshal[[]string](data)
 
 	if Contains(*srcs, url) {
 		// Determine which adapter to use
 		// Should the file with info on how to call the adapter be stored in the adapter itself, or a local key/value, or a normal key/value?
-		return adapters.MainAdapter.Read(url) // TODO: Implement the MetaAdapter, which includes figuring out hooking up adapters
+		return adapters.MainAdapter.Read(url)
 	} else {
 		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 
-		// TODO: Protobufs are more efficient, but not sure the best way to wait for response. Using HTTP rn.
-		// Big problem with using HTTP is you have to have the ip4 multiaddr protocol for the node. Missing out on a lot of opportunities.
-		// This is actually a huge problem, because not all nodes should have to have a domain, and their IP addresses will change, so the entry in the DHT will be outdated.
 		req := &pb.ReadRequest{Url: url, MessageData: b.newMessageData(uuid.New().String())}
 		sig, err := b.signProtoMsg(req)
 		if err != nil {
-			log.Println(err)
+			log.Warning.Println("Failed to sign message: ", err.Error())
 		}
 		req.MessageData.Sig = sig
 
 		err = b.sendProtoMsg(pi.ID, ProtocolReadReq, req)
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 
@@ -142,12 +171,12 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 
 		anchor := &ReadReqAnchor{Req: req, Ch: resCh}
 		b.ReadRequests[req.MessageData.Id] = anchor
-		log.Println("Waiting for response to id " + req.MessageData.Id)
+		log.Info.Println("Waiting for response to id " + req.MessageData.Id)
 
 		// Wait for the response to come back through the channel.
-		// TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
+		// TODO[DEV_FEAT][1]: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
 		res := <-resCh
-		log.Println("Recieved response for request id " + res.MessageData.Id)
+		log.Info.Println("Recieved response for request id " + res.MessageData.Id)
 
 		return res.Data, nil
 	}
@@ -156,7 +185,6 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 /* The uniform interface for writing to any Basin resource, local or remote */
 func (b *BasinNode) WriteResource(ctx context.Context, url string, value []byte) error {
 	return adapters.MainAdapter.Write(url, value)
-	// Do the same thing as ReadResource, if it's a local resource, just use the local adapter. And for now mostly everything should be.
 }
 
 // Working on making the metadata appear...
@@ -167,8 +195,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// For now we'll assume that the URL by itself returns newest version, but later this might have to be
 	// done more explicity. Consider how one might request an older version. Is this a header, part of the path or query?
 
-	// TODO: Note that right here we just loaded a file from the filesystem and threw it into LevelDB
-	// This is when we want to start storing things as actual files? Just start thinking about it.
+	// TODO[PERF][2]: Note that right here we just loaded a file from the filesystem and threw it into LevelDB. There's zero reason to be doing this. Put it in the ~/.basin folder
 
 	// Run all the file writes in parallel
 
@@ -179,8 +206,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		schemaRaw, err := json.Marshal(schema)
 		if err != nil {
-			log.Println("Error marshalling schema file: " + err.Error())
-			return err
+			return fmt.Errorf("Error mashalling schema file %w\n", err)
 		}
 		return b.WriteResource(ctx, schemaUrl, schemaRaw)
 	})
@@ -190,8 +216,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		permRaw, err := json.Marshal(permissions)
 		if err != nil {
-			log.Println("Error marshalling permissions file: " + err.Error())
-			return err
+			return fmt.Errorf("Error mashalling permissions file: %w\n", err)
 		}
 		return b.WriteResource(ctx, permUrl, permRaw)
 	})
@@ -199,10 +224,10 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// ADAPTER CONFIG
 	adpUrl := GetMetadataUrl(url, Adapter)
 	g.Go(func() error {
+		// FIXME[typegen][2]: Again you're causing problems not having a source of truth for type generation :((((
 		adpRaw, err := json.Marshal(adapter)
 		if err != nil {
-			log.Println("Error marshalling adapter file: " + err.Error())
-			return err
+			return fmt.Errorf("Error marshalling adapter file: %w\n", err)
 		}
 		return b.WriteResource(ctx, adpUrl, adpRaw)
 	})
@@ -210,39 +235,34 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	// SOURCES
 	sourcesUrl := GetUserDataUrl(b.Did, "producer.sources")
 	g.Go(func() error {
-		currSrcs, err := LocalOnlyDb.Read(sourcesUrl)
+		currSrcs, err := adapters.MainAdapter.Read(sourcesUrl)
 		var srcs []string
 		err = json.Unmarshal(currSrcs, &srcs)
 		if err != nil {
-			log.Println("Error parsing sources file: " + err.Error())
-			return err
+			return fmt.Errorf("Error parsing sources file: %w\n", err)
 		}
-		srcs = append(srcs, url)
+		srcs = append(srcs, []string{url, adpUrl, permUrl, schemaUrl}...)
 		finalSrcs, err := json.Marshal(srcs)
 		if err != nil {
-			log.Println("Error marshalling sources: " + err.Error())
-			return err
+			return fmt.Errorf("Error marshalling sources: %w\n", err)
 		}
-		// TODO: Should this be written to the LocalAdapter instead of LocalOnlyDb??
-		// return b.WriteResource(ctx, sourcesUrl, finalSrcs)
-		return LocalOnlyDb.Write(sourcesUrl, finalSrcs)
+
+		return adapters.MainAdapter.Write(sourcesUrl, finalSrcs)
 	})
 
 	if err := g.Wait(); err != nil {
-		log.Println("Error writing to one of the files: " + err.Error())
-		return err
+		return fmt.Errorf("Error writing to one of the files: %w\n", err)
 	}
 
 	// Register with the routing table
 	err := HostRouter.RegisterUrl(ctx, url)
 	if err != nil {
-		log.Println("Error regstering URL to Kademlia DHT: " + err.Error())
-		return err
+		return fmt.Errorf("Error regstering URL to Kademlia DHT: %w\n", err)
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
-	log.Println("Successfully registered resource at " + url)
+	log.Info.Println("Successfully registered resource at " + url)
 	return nil
 }
 
@@ -307,4 +327,28 @@ func (b *BasinNode) GetSchemas(ctx context.Context, mode string) (*[]SchemaJson,
 	}
 
 	return &schemas, nil
+}
+
+func (b BasinNode) NotifyOfResourceUpdate(ctx context.Context, url string) error {
+	// Join/create a pubsub topic
+	topic, err := b.Pubsub.Join(getFullTopicName(url))
+	if err != nil {
+		return fmt.Errorf("Failed to join pubsub topic for resource '%s': %w\n", url, err)
+	}
+
+	// What data do we want to send along with this? Are there different types of updates?
+	update := Update{
+		Url: url, SenderID: b.Host.ID().String(),
+	}
+	data, err := json.Marshal(update)
+	if err != nil {
+		return fmt.Errorf("Error serializing message: %w\n", err)
+	}
+
+	err = topic.Publish(ctx, data)
+	if err != nil {
+		return fmt.Errorf("Error publishing to topic: %w\n", err)
+	}
+
+	return nil
 }

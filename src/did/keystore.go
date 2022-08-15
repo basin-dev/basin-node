@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/btcsuite/btcd/btcutil/base58"
 )
 
 func AuthLogin() error {
@@ -102,13 +104,15 @@ func ReadKeystore(did string, pw string) (ed25519.PrivateKey, error) {
 
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return nil, errors.New(".pem file contained no blocks")
+		return nil, fmt.Errorf(".pem file for DID %s contained no blocks", did)
 	}
 
-	priv, err := x509.DecryptPEMBlock(block, []byte(pw))
+	privBase58, err := x509.DecryptPEMBlock(block, []byte(pw))
 	if err != nil {
 		return nil, err
 	}
+
+	priv := base58.Decode(string(privBase58))
 
 	return priv, nil
 }

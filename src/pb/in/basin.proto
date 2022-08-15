@@ -3,7 +3,7 @@ package protocols.basin;
 
 option go_package = "/pb";
 
-// Data that is included in every message; TODO: Include some more stuff: https://github.com/libp2p/go-libp2p/blob/master/examples/multipro/pb/p2p.proto
+// Data that is included in every message; TODO[FEATURE][1]: Include some more stuff: https://github.com/libp2p/go-libp2p/blob/master/examples/multipro/pb/p2p.proto
 message MessageData {
     string nodeId = 1; // ID of the sender libp2p node
     string id = 2; // Unique ID of the request/response pair or message, in order to match incoming response with previous request
@@ -28,13 +28,21 @@ message Capability {
     string expiration = 2;
 }
 
+message Permission {
+    repeated string data = 1;
+    repeated Capability capabilities = 2;
+    repeated string entities = 3;
+}
+
 message SubscriptionRequest {
     MessageData messageData = 1;
 
-    string Url = 2;
-    repeated Capability capabilities = 3;
+    repeated Permission permissions = 2;
 }
 
 message SubscriptionResponse {
     MessageData messageData = 1;
+
+    bool accepted = 2;
+    string url = 3;
 }

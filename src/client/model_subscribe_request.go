@@ -17,7 +17,6 @@ import (
 
 // SubscribeRequest struct for SubscribeRequest
 type SubscribeRequest struct {
-	Url string `json:"url"`
 	Permissions []PermissionJson `json:"permissions"`
 }
 
@@ -25,9 +24,8 @@ type SubscribeRequest struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSubscribeRequest(url string, permissions []PermissionJson) *SubscribeRequest {
+func NewSubscribeRequest(permissions []PermissionJson) *SubscribeRequest {
 	this := SubscribeRequest{}
-	this.Url = url
 	this.Permissions = permissions
 	return &this
 }
@@ -38,30 +36,6 @@ func NewSubscribeRequest(url string, permissions []PermissionJson) *SubscribeReq
 func NewSubscribeRequestWithDefaults() *SubscribeRequest {
 	this := SubscribeRequest{}
 	return &this
-}
-
-// GetUrl returns the Url field value
-func (o *SubscribeRequest) GetUrl() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Url
-}
-
-// GetUrlOk returns a tuple with the Url field value
-// and a boolean to check if the value has been set.
-func (o *SubscribeRequest) GetUrlOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Url, true
-}
-
-// SetUrl sets field value
-func (o *SubscribeRequest) SetUrl(v string) {
-	o.Url = v
 }
 
 // GetPermissions returns the Permissions field value
@@ -90,9 +64,6 @@ func (o *SubscribeRequest) SetPermissions(v []PermissionJson) {
 
 func (o SubscribeRequest) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["url"] = o.Url
-	}
 	if true {
 		toSerialize["permissions"] = o.Permissions
 	}

@@ -1,0 +1,1 @@
+<button class="border border-black cursor-pointer rounded-full px-4 py-2 hover:bg-black hover:border-white hover:text-white"><slot></slot></button>

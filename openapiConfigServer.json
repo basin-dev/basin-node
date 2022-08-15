@@ -1,5 +1,6 @@
 {
     "outputAsLibrary": true,
     "packageName": "server",
-    "packageVersion": "1.0.0"
+    "packageVersion": "1.0.0",
+    "featureCORS": true
 }

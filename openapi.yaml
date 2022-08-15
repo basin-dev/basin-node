@@ -13,7 +13,7 @@ externalDocs:
   description: Find out more about Basin
   url: https://github.com/sestinj/basin-node
 servers:
-- url: http://127.0.0.1:8555/api/v3
+- url: http://127.0.0.1:8555
 paths:
   /write:
     put:
@@ -109,7 +109,7 @@ paths:
             application/json:
               schema:
                 type: string
-                format: bytes # TODO: Should this be binary or bytes? The corresponding go types generated are *os.File and string
+                format: bytes # FIXME[base64][2]: Should this be binary or bytes? The corresponding go types generated are *os.File and string. This might be why you're getting a base64 string
           description: successful operation
         "400":
           description: Error
@@ -124,14 +124,11 @@ paths:
             schema:
               type: object
               properties:
-                url:
-                  type: string
                 permissions:
                   type: array
                   items:
                     $ref: "#/components/schemas/PermissionJson"
               required:
-              - url
               - permissions
       responses:
         "200":
@@ -147,6 +144,34 @@ paths:
         "405":
           description: Validation exception
       summary: Request subscription to Basin resource
+  /notify:
+    post:
+      description: Notify the network of an update to a resource
+      operationId: notify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+              required:
+              - url
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary:  Notify the network of an update to a resource
 
 components:
   schemas:
