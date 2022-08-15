@@ -2,7 +2,7 @@ package util
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -35,7 +35,7 @@ func UnmarshalFromFile[T any](filepath string) (*T, error) {
 	case "yml":
 		err = yaml.Unmarshal(raw, &t)
 	default:
-		return nil, errors.New("Cannot parse filetype: " + segs[len(segs)-1])
+		return nil, fmt.Errorf("Cannot parse filetype '%s'", segs[len(segs)-1])
 	}
 	if err != nil {
 		return nil, err

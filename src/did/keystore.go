@@ -104,7 +104,7 @@ func ReadKeystore(did string, pw string) (ed25519.PrivateKey, error) {
 
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return nil, errors.New(".pem file contained no blocks")
+		return nil, fmt.Errorf(".pem file for DID %s contained no blocks", did)
 	}
 
 	privBase58, err := x509.DecryptPEMBlock(block, []byte(pw))

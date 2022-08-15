@@ -5,7 +5,7 @@ package scratch
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"net/http"
 
@@ -45,5 +45,5 @@ func StartP2pHttp(ctx context.Context, h libp2p_host.Host) error {
 	server := &http.Server{}
 	server.Serve(listener)
 
-	return errors.New("P2P HTTP Server has been closed.")
+	return fmt.Errorf("P2P HTTP Server has been closed.")
 }

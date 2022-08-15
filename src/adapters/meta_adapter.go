@@ -7,7 +7,7 @@ package adapters
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -41,8 +41,7 @@ func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
 	} else if strings.HasPrefix(parsed.Domain, "meta."+util.Permissions.String()) {
 		return LOCAL_ADAPTER_CONFIG, nil
 	} else if strings.HasPrefix(parsed.Domain, "meta.") {
-		log.Printf("Unknown meta prefix in URL '%s'", parsed.Domain)
-		return adapterCfg, errors.New("Unknown meta prefix")
+		return adapterCfg, fmt.Errorf("Unknown meta prefix in URL '%s'", parsed.Domain)
 	}
 
 	// TODO: For now, bottoming out with user data (basin.producer....) files, but want to probably register them in the same way instead. See below
@@ -81,7 +80,7 @@ func selectAdapter(url string) (Adapter, error) {
 		return httpAdapter, nil
 	default:
 		// TODO: Adapter plugins
-		return nil, errors.New("Unknown adapter")
+		return nil, fmt.Errorf("Unknown adapter name '%s'", cfg.AdapterName)
 	}
 }
 

@@ -1,7 +1,7 @@
 package did
 
 import (
-	"errors"
+	"fmt"
 
 	. "github.com/ockam-network/did"
 )
@@ -30,7 +30,7 @@ func (m MetaResolver) Resolve(did string) ([]byte, error) {
 
 		return doc, err
 	} else {
-		return nil, errors.New("Resolver for did not found")
+		return nil, fmt.Errorf("Resolver for DID %s not found", did)
 	}
 }
 
