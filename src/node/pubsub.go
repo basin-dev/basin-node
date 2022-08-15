@@ -3,8 +3,6 @@ package node
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"time"
 
 	libp2p_host "github.com/libp2p/go-libp2p-core/host"
 	"github.com/sestinj/basin-node/log"
@@ -13,14 +11,13 @@ import (
 	peer "github.com/libp2p/go-libp2p-core/peer"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-
-	mdns "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
-const DISCOVERY_NAME = "schema-topics"
+const DISCOVERY_NAME = "basin"
 
+// The Update message sent over pubsub
 type Update struct {
-	Message  string
+	Url      string
 	SenderID string
 }
 
@@ -28,22 +25,21 @@ type discoveryNotifee struct {
 	h libp2p_host.Host
 }
 
+func getFullTopicName(topicName string) string {
+	return DISCOVERY_NAME + ":" + topicName
+}
+
 func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	fmt.Printf("discovered new peer %s\n", pi.ID.Pretty())
+	log.Info.Printf("discovered new peer %s\n", pi.ID.Pretty())
 	err := n.h.Connect(context.Background(), pi)
 	if err != nil {
-		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
+		log.Warning.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
 	}
 }
 
-func setupLANDiscovery(h libp2p_host.Host) error {
-	service := mdns.NewMdnsService(h, DISCOVERY_NAME, &discoveryNotifee{h: h})
-	return service.Start()
-}
-
-func joinSchemaTopic(ps *pubsub.PubSub) (*pubsub.Topic, *pubsub.Subscription) {
+func JoinSchemaTopic(ps *pubsub.PubSub, topicName string) (*pubsub.Topic, *pubsub.Subscription) {
 	// Join/create a pubsub topic
-	topic, err := ps.Join("schema-topic:" + "test-topic")
+	topic, err := ps.Join(getFullTopicName(topicName))
 	if err != nil {
 		panic(err)
 	}
@@ -52,17 +48,18 @@ func joinSchemaTopic(ps *pubsub.PubSub) (*pubsub.Topic, *pubsub.Subscription) {
 	if err != nil {
 		panic(err)
 	}
+
 	return topic, sub
 }
 
-func streamSubscription(ctx context.Context, sub *pubsub.Subscription, ch chan *Update, selfID peer.ID) {
+func streamSubscription(ctx context.Context, sub *pubsub.Subscription, ch chan *Update) error {
 	for {
 		msg, err := sub.Next(ctx)
 		if err != nil {
-			log.Warning.Println(err.Error())
+			log.Warning.Println("PubSub stream recieved an error: ", err.Error())
 			// When a goroutine fails, better to close and return then to panic and destroy the entire application
 			close(ch)
-			return
+			return err
 		}
 
 		// Uncomment except for super basic testing purposes
@@ -73,48 +70,25 @@ func streamSubscription(ctx context.Context, sub *pubsub.Subscription, ch chan *
 		update := new(Update)
 		err = json.Unmarshal(msg.Data, update)
 		if err != nil {
-			// This is why err handling is so explicit: you don't want to panic all the time
 			continue
 		}
 
-		fmt.Println("Unmarshaled Update:", update.Message, "from", update.SenderID)
-
+		log.Info.Println("Unmarshaled Update:", update.Url, "from", update.SenderID)
 		ch <- update
 	}
 }
 
-func printUpdateStream(ch chan *Update) {
+// TODO[FEATURE][2] Run all of the notification handler plugins each time there is an update. Right now just hardwired in the printUpdate handler. Should have a struct and interface, then loop through a list of them.
+// - you want to build a queue on the node though that keeps track of what updates there are, then the handler plugins cross these off of the list.
+func runNotificationHandlers(ctx context.Context, ch chan *Update) error {
 	for {
 		update := <-ch
-
-		println(update.SenderID + ": " + update.Message)
+		printUpdate(update)
 	}
 }
 
-func sendMessage(ctx context.Context, topic *pubsub.Topic, msg string, selfID peer.ID) {
-	update := Update{
-		Message: msg, SenderID: selfID.String(),
-	}
-	data, err := json.Marshal(update)
-	if err != nil {
-		log.Warning.Println("Error serializing message: ", err.Error())
-	}
-
-	err = topic.Publish(ctx, data)
-	if err != nil {
-		log.Warning.Println("Error publishing to topic: ", err.Error())
-	}
-}
-
-func periodicMsgs(ctx context.Context, topic *pubsub.Topic, selfID peer.ID) {
-	ticker := time.NewTicker(10 * time.Second)
-
-	for {
-		fmt.Println("tick")
-		time := <-ticker.C
-
-		sendMessage(ctx, topic, "Test Message at "+time.String(), selfID)
-	}
+func printUpdate(update *Update) {
+	println(update.SenderID + ": " + update.Url)
 }
 
 /* Instantiate a new libp2p PubSub */
@@ -126,26 +100,3 @@ func StartPubSub(ctx context.Context, host libp2p_host.Host) (*pubsub.PubSub, er
 
 	return ps, nil
 }
-
-// func main() {
-
-// 	// Setup LAN Discovery
-// 	if err := setupLANDiscovery(host); err != nil {
-// 		println("lan err")
-// 		panic(err)
-// 	}
-
-// 	topic, sub := joinSchemaTopic(ps)
-
-// 	updateChan := make(chan *Update)
-
-// 	println(topic.String())
-
-// 	go streamSubscription(ctx, sub, updateChan, host.ID())
-
-// 	go periodicMsgs(ctx, topic, host.ID())
-
-// 	// I'd like this to be another goroutine, so what's the best way to have a main forever loop?
-// 	// Right now just leaving the last as non-goroutine so the others get started
-// 	printUpdateStream(updateChan)
-// }

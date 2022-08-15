@@ -89,16 +89,6 @@ paths:
         "400":
           description: Error
       summary: Read Basin resource
-    options:
-      description: Preflight options
-      operationId: read-cors
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Successful preflight
   /subscribe:
     post:
       description: Request subscription to Basin resource
@@ -122,6 +112,29 @@ paths:
         "405":
           description: Validation exception
       summary: Request subscription to Basin resource
+  /notify:
+    post:
+      description: Notify the network of an update to a resource
+      operationId: notify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/notify_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Notify the network of an update to a resource
 components:
   schemas:
     PermissionJson:
@@ -222,4 +235,11 @@ components:
           type: array
       required:
       - permissions
+      type: object
+    notify_request:
+      properties:
+        url:
+          type: string
+      required:
+      - url
       type: object

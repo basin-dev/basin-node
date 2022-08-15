@@ -4,11 +4,78 @@ All URIs are relative to *http://127.0.0.1:8555*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**Notify**](DefaultApi.md#Notify) | **Post** /notify | Notify the network of an update to a resource
 [**Read**](DefaultApi.md#Read) | **Get** /read | Read Basin resource
 [**Register**](DefaultApi.md#Register) | **Post** /register | Register Basin resource
 [**Subscribe**](DefaultApi.md#Subscribe) | **Post** /subscribe | Request subscription to Basin resource
 [**Write**](DefaultApi.md#Write) | **Put** /write | Write Basin resource
 
+
+
+## Notify
+
+> bool Notify(ctx).NotifyRequest(notifyRequest).Execute()
+
+Notify the network of an update to a resource
+
+
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    notifyRequest := *openapiclient.NewNotifyRequest("Url_example") // NotifyRequest |  (optional)
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.DefaultApi.Notify(context.Background()).NotifyRequest(notifyRequest).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `DefaultApi.Notify``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `Notify`: bool
+    fmt.Fprintf(os.Stdout, "Response from `DefaultApi.Notify`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiNotifyRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **notifyRequest** | [**NotifyRequest**](NotifyRequest.md) |  | 
+
+### Return type
+
+**bool**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## Read

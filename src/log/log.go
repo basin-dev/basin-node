@@ -20,6 +20,7 @@ var (
 	Info    *log.Logger
 	Warning *log.Logger
 	Error   *log.Logger
+	Debug   *log.Logger
 )
 
 func InitLoggers() {
@@ -37,4 +38,5 @@ func InitLoggers() {
 	Info = log.New(os.Stdout, Cyan+"INFO: ", log.Ldate|log.Ltime)
 	Warning = log.New(os.Stdout, Yellow+"WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(os.Stderr, Red+"ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Debug = log.New(os.Stderr, Purple+"DEBUG: ", log.Lshortfile)
 }

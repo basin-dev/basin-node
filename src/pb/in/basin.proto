@@ -42,4 +42,7 @@ message SubscriptionRequest {
 
 message SubscriptionResponse {
     MessageData messageData = 1;
+
+    bool accepted = 2;
+    string url = 3;
 }

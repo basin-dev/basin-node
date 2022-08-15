@@ -81,3 +81,12 @@ func (s *DefaultApiService) Write(ctx context.Context, writeRequest WriteRequest
 	}
 	return Response(200, true), nil
 }
+
+// Notify - Notify the network of an update to a resource
+func (s *DefaultApiService) Notify(ctx context.Context, notifyRequest NotifyRequest) (ImplResponse, error) {
+	err := node.TheBasinNode.NotifyOfResourceUpdate(ctx, notifyRequest.Url)
+	if err != nil {
+		return Response(400, false), nil
+	}
+	return Response(200, true), nil
+}

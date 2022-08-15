@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sestinj/basin-node/adapters"
 	"github.com/sestinj/basin-node/client"
 	didutil "github.com/sestinj/basin-node/did"
@@ -31,6 +32,7 @@ type BasinNode struct {
 	Did          string
 	PrivKey      ed25519.PrivateKey
 	Http         string
+	Pubsub       *pubsub.PubSub
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
@@ -54,7 +56,7 @@ func (c *BasinNodeConfig) SetDefaults() {
 	}
 }
 
-func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
+func StartBasinNode(config BasinNodeConfig) (*BasinNode, error) {
 	ctx := context.Background()
 
 	// Create listener on port
@@ -62,7 +64,7 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 
 	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http}
 	if err != nil {
-		return basin, err
+		return &basin, err
 	}
 
 	h.SetStreamHandler(ProtocolReadReq, basin.readReqHandler)
@@ -94,7 +96,7 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	}
 
 	TheBasinNode = &basin
-	return basin, nil
+	return &basin, nil
 }
 
 /* Handle a subscription request. */
@@ -325,4 +327,28 @@ func (b *BasinNode) GetSchemas(ctx context.Context, mode string) (*[]SchemaJson,
 	}
 
 	return &schemas, nil
+}
+
+func (b BasinNode) NotifyOfResourceUpdate(ctx context.Context, url string) error {
+	// Join/create a pubsub topic
+	topic, err := b.Pubsub.Join(getFullTopicName(url))
+	if err != nil {
+		return fmt.Errorf("Failed to join pubsub topic for resource '%s': %w\n", url, err)
+	}
+
+	// What data do we want to send along with this? Are there different types of updates?
+	update := Update{
+		Url: url, SenderID: b.Host.ID().String(),
+	}
+	data, err := json.Marshal(update)
+	if err != nil {
+		return fmt.Errorf("Error serializing message: %w\n", err)
+	}
+
+	err = topic.Publish(ctx, data)
+	if err != nil {
+		return fmt.Errorf("Error publishing to topic: %w\n", err)
+	}
+
+	return nil
 }

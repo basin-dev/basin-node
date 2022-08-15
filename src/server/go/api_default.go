@@ -50,16 +50,16 @@ func NewDefaultApiController(s DefaultApiServicer, opts ...DefaultApiOption) Rou
 func (c *DefaultApiController) Routes() Routes {
 	return Routes{
 		{
+			"Notify",
+			strings.ToUpper("Post"),
+			"/notify",
+			c.Notify,
+		},
+		{
 			"Read",
 			strings.ToUpper("Get"),
 			"/read",
 			c.Read,
-		},
-		{
-			"ReadCors",
-			strings.ToUpper("Options"),
-			"/read",
-			c.ReadCors,
 		},
 		{
 			"Register",
@@ -82,11 +82,20 @@ func (c *DefaultApiController) Routes() Routes {
 	}
 }
 
-// Read - Read Basin resource
-func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	urlParam := query.Get("url")
-	result, err := c.service.Read(r.Context(), urlParam)
+// Notify - Notify the network of an update to a resource
+func (c *DefaultApiController) Notify(w http.ResponseWriter, r *http.Request) {
+	notifyRequestParam := NotifyRequest{}
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&notifyRequestParam); err != nil {
+		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
+		return
+	}
+	if err := AssertNotifyRequestRequired(notifyRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Notify(r.Context(), notifyRequestParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)
@@ -97,9 +106,11 @@ func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// ReadCors -
-func (c *DefaultApiController) ReadCors(w http.ResponseWriter, r *http.Request) {
-	result, err := c.service.ReadCors(r.Context())
+// Read - Read Basin resource
+func (c *DefaultApiController) Read(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	urlParam := query.Get("url")
+	result, err := c.service.Read(r.Context(), urlParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)

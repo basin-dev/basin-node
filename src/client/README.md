@@ -78,6 +78,7 @@ All URIs are relative to *http://127.0.0.1:8555*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*DefaultApi* | [**Notify**](docs/DefaultApi.md#notify) | **Post** /notify | Notify the network of an update to a resource
 *DefaultApi* | [**Read**](docs/DefaultApi.md#read) | **Get** /read | Read Basin resource
 *DefaultApi* | [**Register**](docs/DefaultApi.md#register) | **Post** /register | Register Basin resource
 *DefaultApi* | [**Subscribe**](docs/DefaultApi.md#subscribe) | **Post** /subscribe | Request subscription to Basin resource
@@ -89,6 +90,7 @@ Class | Method | HTTP request | Description
  - [AdapterJson](docs/AdapterJson.md)
  - [AdapterSchema](docs/AdapterSchema.md)
  - [CapabilitySchema](docs/CapabilitySchema.md)
+ - [NotifyRequest](docs/NotifyRequest.md)
  - [PermissionJson](docs/PermissionJson.md)
  - [PermissionSchema](docs/PermissionSchema.md)
  - [RegisterRequest](docs/RegisterRequest.md)

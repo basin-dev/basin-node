@@ -9,6 +9,7 @@ go/logger.go
 go/model_adapter_json.go
 go/model_adapter_schema.go
 go/model_capability_schema.go
+go/model_notify_request.go
 go/model_permission_json.go
 go/model_permission_schema.go
 go/model_register_request.go

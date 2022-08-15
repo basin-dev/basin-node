@@ -123,7 +123,16 @@ func (b *BasinNode) subResHandler(s network.Stream) {
 		return
 	}
 
-	log.Error.Println("NOT YET IMPLEMENTED")
+	if data.Accepted {
+		topic, sub := JoinSchemaTopic(b.Pubsub, data.Url)
+		ch := make(chan *Update)
+		ctx := context.Background()
+		go runNotificationHandlers(ctx, ch)
+		log.Warning.Printf("Streaming of topic '%s' ended unexpectedly: %v\n", topic.String(), streamSubscription(ctx, sub, ch))
+		// TODO[FEATURE][1]: Keep track of subscriptions, both in a file and a map to the actual sub object. Should also facilitate resubscription upon node restart if persistent mode is turned on.
+	} else {
+		log.Info.Printf("Request for subscription to %s was rejected.", data.Url)
+	}
 }
 
 var allowed bool = false
@@ -146,7 +155,7 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 		return
 	}
 
-	// Here is where you call the subscription decider plugin
+	// FIXME[DEMO][2] Here is where you call the subscription decider plugin
 	allowed = true
 
 	// Add this request to the list of requests
@@ -157,6 +166,7 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 		return
 	}
 
+	// TODO[ucan, typegen][2] Need to update this whole function after dealing with UCANs. Fix the thing where you're only taking the first resource in the array
 	var permissions []PermissionJson
 	for _, permission := range data.Permissions {
 		var capabilities []CapabilityJson
@@ -176,6 +186,19 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	err = b.WriteResource(ctx, url, val)
 	if err != nil {
 		log.Warning.Println(err)
+	}
+
+	// Sends back the same MessageData.Id so the response can be identified
+	resp := &pb.SubscriptionResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Url: permissions[0].Data[0], Accepted: allowed}
+	sig, err := b.signProtoMsg(resp)
+	if err != nil {
+		log.Warning.Println("Error signing message: ", err.Error())
+	}
+	resp.MessageData.Sig = sig
+
+	err = b.sendProtoMsg(s.Conn().RemotePeer(), ProtocolSubRes, resp)
+	if err != nil {
+		log.Warning.Println("Error sending message: ", err)
 	}
 
 	// TODO[ucan][2]: Automatically accepting for the demo. Also don't want to just search the file like the below. Use UCANs

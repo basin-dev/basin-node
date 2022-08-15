@@ -65,14 +65,15 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	// Create new PubSub
 	log.Info.Println("Creating PubSub...")
-	_, err = StartPubSub(ctx, basin.Host)
+	ps, err := StartPubSub(ctx, basin.Host)
 	if err != nil {
 		log.Error.Fatal("Failed to instantiate pubsub: " + err.Error())
 	}
+	basin.Pubsub = ps
 
 	// Start up this node's HTTP API, concurrently with CLI
 	log.Info.Println("Serving HTTP API...")
-	RunHttpServer(ctx, &basin, config.Http)
+	RunHttpServer(ctx, basin, config.Http)
 }
 
 // DiscoveryServiceTag is used in our mDNS advertisements to discover other peers.
