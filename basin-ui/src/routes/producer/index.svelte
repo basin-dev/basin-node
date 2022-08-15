@@ -7,7 +7,11 @@
     let resources: Promise<string[]> = Basin.read("basin://did:key:z6MkoYyGsB9WLBmf12RrcBdai1UPcDcyvNWcMQdRpXzzfo4H.basin.producer.sources");
 </script>
 
-<h2>Resources</h2>
+<div class="flex">
+    <h2 class="text-2xl">Resources</h2>
+    <a class="ml-auto" href="/producer/resources/new"><button class="border border-black cursor-pointer rounded-full px-4 py-2 hover:bg-black hover:border-white hover:text-white">New Resource +</button></a>
+</div>
+<br>
 
 {#await resources}
     <Loader></Loader>

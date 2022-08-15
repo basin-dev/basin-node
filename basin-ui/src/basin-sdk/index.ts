@@ -37,6 +37,22 @@ export class BasinSDK {
         return this._read(url);
     }
 
+    /** Register a new resource with the node at the gateway URL node. */
+    async register(url: string, adapter: any, permissions: any, schema: any) {
+        let fullUrl = `${this.gatewayUrl}/register`;
+        let resp = await fetch(fullUrl, {
+            method: "POST",
+            body: JSON.stringify({
+                url,
+                permissions,
+                adapter,
+                schema
+            })
+        });
+        return resp;
+    }
+
+
     // write: (url: string, val: any) => Promise<boolean>;
 }
 

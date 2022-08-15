@@ -8,8 +8,6 @@ import Loader from "@lib/Loader.svelte";
     let schema: Promise<any> = Basin.readMetadata(url, "schema");
     let permissions: Promise<any> = Basin.readMetadata(url, "permissions");
     let adapter: Promise<any> = Basin.readMetadata(url, "adapter");
-    
-
 </script>
 
 <h1>Resource > Twitter Followers</h1>
