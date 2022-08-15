@@ -1,12 +1,13 @@
 package adapters
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	log "github.com/sestinj/basin-node/log"
 )
 
 var (
@@ -28,15 +29,14 @@ type HttpAdapterConfig struct {
 
 func parseHttpConfig(url string) (HttpAdapterConfig, error) {
 	fullCfg, err := getAdapterConfig(url)
-	log.Println(fullCfg)
+	log.Info.Println(fullCfg)
 	cfg := new(HttpAdapterConfig)
 	if err != nil {
 		return *cfg, err
 	}
 	err = mapstructure.Decode(fullCfg.Config, cfg)
 	if err != nil {
-		log.Println("Error decoding config: ", err.Error())
-		return *cfg, err
+		return *cfg, fmt.Errorf("Error decoding config: %w", err)
 	}
 	return *cfg, nil
 }
@@ -44,8 +44,7 @@ func parseHttpConfig(url string) (HttpAdapterConfig, error) {
 func (l HttpAdapter) Read(url string) ([]byte, error) {
 	cfg, err := parseHttpConfig(url)
 	if err != nil {
-		log.Println("Failed to parse HTTP config: ", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Failed to parse HTTP config for url %s: %w", url, err)
 	}
 
 	return performRequest(cfg.Read)
@@ -66,19 +65,16 @@ func performRequest(endpoint EndpointDescription) ([]byte, error) {
 
 	req, err := http.NewRequest(endpoint.Method, endpoint.Url, reader)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 

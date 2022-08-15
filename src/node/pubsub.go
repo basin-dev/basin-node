@@ -7,6 +7,7 @@ import (
 	"time"
 
 	libp2p_host "github.com/libp2p/go-libp2p-core/host"
+	"github.com/sestinj/basin-node/log"
 
 	// kademlia "github.com/libp2p/go-libp2p-kad-dht"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -58,7 +59,7 @@ func streamSubscription(ctx context.Context, sub *pubsub.Subscription, ch chan *
 	for {
 		msg, err := sub.Next(ctx)
 		if err != nil {
-			println(err)
+			log.Warning.Println(err.Error())
 			// When a goroutine fails, better to close and return then to panic and destroy the entire application
 			close(ch)
 			return
@@ -96,12 +97,12 @@ func sendMessage(ctx context.Context, topic *pubsub.Topic, msg string, selfID pe
 	}
 	data, err := json.Marshal(update)
 	if err != nil {
-		println("Error serializing message.")
+		log.Warning.Println("Error serializing message: ", err.Error())
 	}
 
 	err = topic.Publish(ctx, data)
 	if err != nil {
-		fmt.Println("Error: ")
+		log.Warning.Println("Error publishing to topic: ", err.Error())
 	}
 }
 

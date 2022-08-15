@@ -5,12 +5,13 @@ import (
 	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
-	"log"
+	"fmt"
 	"strings"
 
 	ggio "github.com/gogo/protobuf/io"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/sestinj/basin-node/log"
 	"github.com/sestinj/basin-node/pb"
 
 	// "google.golang.org/protobuf/proto"
@@ -25,8 +26,7 @@ func (b *BasinNode) signProtoMsg(data proto.Message) ([]byte, error) {
 	}
 	sig, err := b.PrivKey.Sign(rand.Reader, digest, crypto.Hash(0))
 	if err != nil {
-		log.Println("Failed to sign message with private key: ", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Failed to sign message with private key: %w\n", err)
 	}
 	return sig, nil
 }
@@ -39,7 +39,7 @@ func verifyMessage(msg proto.Message, msgData *pb.MessageData) bool {
 
 	raw, err := proto.Marshal(msg)
 	if err != nil {
-		log.Println("Failed to unmarshal proto message.")
+		log.Warning.Println("Failed to unmarshal proto message.")
 		return false
 	}
 	msgData.Sig = sig
@@ -51,15 +51,13 @@ func verifyMessage(msg proto.Message, msgData *pb.MessageData) bool {
 func (b *BasinNode) sendProtoMsg(id peer.ID, p protocol.ID, data proto.Message) error {
 	s, err := b.Host.NewStream(context.Background(), id, p)
 	if err != nil {
-		log.Println("Failed to create new stream: ", err.Error())
-		return err
+		return fmt.Errorf("Failed to create new stream: %w\n", err)
 	}
 	defer s.Close()
 
 	writer := ggio.NewFullWriter(s)
 	err = writer.WriteMsg(data)
 	if err != nil {
-		log.Println(err)
 		s.Reset()
 		return err
 	}

@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/sestinj/basin-node/pb"
@@ -16,22 +17,22 @@ import (
 func (b *BasinNode) readReqHandler(s network.Stream) {
 	defer s.Close()
 
-	log.Println("Recieved new read stream")
+	log.Info.Println("Recieved new read stream")
 
 	data := &pb.ReadRequest{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println("Failed to read stream: ", err.Error())
+		log.Warning.Println("Failed to read stream: ", err.Error())
 		return
 	}
 
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Println("Failed to unmarshal stream: ", err.Error())
+		log.Warning.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
-	log.Println("Stream has requested the following URL: " + string(data.Url))
+	log.Info.Println("Stream has requested the following URL: " + string(data.Url))
 
 	// Check permissions: TODO: Should this be done in ReadResource instead, or is that too much overhead for local calls?
 	ctx := context.Background()
@@ -58,7 +59,7 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 	// Get the actual resource
 	resource, err := b.ReadResource(ctx, string(data.Url))
 	if err != nil {
-		log.Println("Error reading the requested resource in readReqHandler")
+		log.Warning.Println("Error reading the requested resource in readReqHandler")
 		return
 	}
 	if !allowed {
@@ -69,30 +70,30 @@ func (b *BasinNode) readReqHandler(s network.Stream) {
 	resp := &pb.ReadResponse{MessageData: &pb.MessageData{NodeId: b.Host.ID().String(), Id: data.MessageData.Id}, Data: resource}
 	sig, err := b.signProtoMsg(resp)
 	if err != nil {
-		log.Println(err)
+		log.Warning.Println("Error signing message: ", err.Error())
 	}
 	resp.MessageData.Sig = sig
 
 	err = b.sendProtoMsg(s.Conn().RemotePeer(), ProtocolReadRes, resp)
 	if err != nil {
-		log.Println(err)
+		log.Warning.Println("Error sending message: ", err)
 	}
 }
 
 func (b *BasinNode) readResHandler(s network.Stream) {
-	log.Println("New read response stream")
+	log.Info.Println("New read response stream")
 	defer s.Close()
 
 	data := &pb.ReadResponse{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println("Failed to read stream: ", err.Error())
+		log.Warning.Println("Failed to read stream: ", err.Error())
 		return
 	}
 
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Println("Failed to unmarshal stream: ", err.Error())
+		log.Warning.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
@@ -108,22 +109,22 @@ func (b *BasinNode) readResHandler(s network.Stream) {
 func (b *BasinNode) subResHandler(s network.Stream) {
 	defer s.Close()
 
-	log.Println("New subscription response stream")
+	log.Info.Println("New subscription response stream")
 
 	data := &pb.SubscriptionResponse{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println("Failed to read stream: ", err.Error())
+		log.Warning.Println("Failed to read stream: ", err.Error())
 		return
 	}
 
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Println("Failed to unmarshal stream: ", err.Error())
+		log.Warning.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
-	log.Println("NOT YET IMPLEMENTED")
+	log.Error.Println("NOT YET IMPLEMENTED")
 }
 
 var allowed bool = false
@@ -131,18 +132,18 @@ var allowed bool = false
 func (b *BasinNode) subReqHandler(s network.Stream) {
 	defer s.Close()
 
-	log.Println("New subscription request stream")
+	log.Info.Println("New subscription request stream")
 
 	data := &pb.SubscriptionRequest{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
-		log.Println("Failed to read stream: ", err.Error())
+		log.Warning.Println("Failed to read stream: ", err.Error())
 		return
 	}
 
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Println("Failed to unmarshal stream: ", err.Error())
+		log.Warning.Println("Failed to unmarshal stream: ", err.Error())
 		return
 	}
 
@@ -153,7 +154,7 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	ctx := context.Background()
 	requests, err := b.GetRequests(ctx, "producer")
 	if err != nil {
-		log.Println(err)
+		log.Warning.Println(err)
 		return
 	}
 
@@ -170,12 +171,12 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	url := util.GetUserDataUrl(b.Did, "producer.requests")
 	val, err := json.Marshal(*requests)
 	if err != nil {
-		log.Println(err)
+		log.Warning.Println(err)
 		return
 	}
 	err = b.WriteResource(ctx, url, val)
 	if err != nil {
-		log.Println(err)
+		log.Warning.Println(err)
 	}
 
 	// TODO: Automatically accepting for the demo
@@ -192,13 +193,13 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	// 	return
 	// }
 
-	log.Println("Successfully recorded new request")
+	log.Info.Println("Successfully recorded new request")
 }
 
 func (b *BasinNode) writeResHandler(s network.Stream) {
-	log.Fatal("Not yet implemented")
+	log.Error.Fatal("Not yet implemented")
 }
 
 func (b *BasinNode) writeReqHandler(s network.Stream) {
-	log.Fatal("Not yet implemented")
+	log.Error.Fatal("Not yet implemented")
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/json"
-	"log"
+	"fmt"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -77,21 +79,21 @@ func StartBasinNode(config BasinNodeConfig) (BasinNode, error) {
 	requestsUrl := GetUserDataUrl(basin.Did, "producer.requests")
 	requests, err := json.Marshal([]client.PermissionJson{})
 	if err != nil {
-		log.Fatal("Couldn't initialize requests file: " + err.Error())
+		log.Error.Fatal("Couldn't initialize requests file: " + err.Error())
 	}
 	err = basin.WriteResource(ctx, requestsUrl, requests)
 	if err != nil {
-		log.Fatal("Failed to write requests file: " + err.Error())
+		log.Error.Fatal("Failed to write requests file: " + err.Error())
 	}
 
 	sourcesUrl := GetUserDataUrl(basin.Did, "producer.sources")
 	sources, err := json.Marshal([]string{"basin://test", sourcesUrl, requestsUrl})
 	if err != nil {
-		log.Fatal("Couldn't initialize files: " + err.Error())
+		log.Error.Fatal("Couldn't initialize files: " + err.Error())
 	}
 	err = basin.WriteResource(ctx, sourcesUrl, sources)
 	if err != nil {
-		log.Fatal("Failed to write sources file: " + err.Error())
+		log.Error.Fatal("Failed to write sources file: " + err.Error())
 	}
 
 	TheBasinNode = &basin
@@ -104,15 +106,13 @@ func (b *BasinNode) HandleSubscriptionRequest(ctx context.Context, did string, p
 	url := GetUserDataUrl(b.Did, "producer.requests")
 	requests, err := b.GetRequests(ctx, "producer")
 	if err != nil {
-		log.Println("Failed to read producer.requests: ", err.Error())
-		return err
+		return fmt.Errorf("Failed to read producer.requests: %w\n", err)
 	}
 	*requests = append(*requests, (*permissions)...)
 
 	data, err := json.Marshal(requests)
 	if err != nil {
-		log.Println("Failed to marshal requests: ", err.Error())
-		return err
+		return fmt.Errorf("Failed to marshal requests: %w\n", err)
 	}
 	err = b.WriteResource(ctx, url, data)
 	if err != nil {
@@ -140,8 +140,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 	srcsUrl := GetUserDataUrl(b.Did, "producer.sources")
 	data, err := adapters.MainAdapter.Read(srcsUrl)
 	if err != nil {
-		log.Println("Failed to read sources file: ", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Failed to read source file: %w\n", err)
 	}
 	srcs := Unmarshal[[]string](data)
 
@@ -153,7 +152,6 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		// Use DHT to route to the node that produces this basin url
 		pi, err := HostRouter.ResolvePeer(ctx, url)
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 
@@ -163,7 +161,7 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 		req := &pb.ReadRequest{Url: url, MessageData: b.newMessageData(uuid.New().String())}
 		sig, err := b.signProtoMsg(req)
 		if err != nil {
-			log.Println(err)
+			log.Warning.Println("Failed to sign message: ", err.Error())
 		}
 		req.MessageData.Sig = sig
 
@@ -177,12 +175,12 @@ func (b *BasinNode) ReadResource(ctx context.Context, url string) ([]byte, error
 
 		anchor := &ReadReqAnchor{Req: req, Ch: resCh}
 		b.ReadRequests[req.MessageData.Id] = anchor
-		log.Println("Waiting for response to id " + req.MessageData.Id)
+		log.Info.Println("Waiting for response to id " + req.MessageData.Id)
 
 		// Wait for the response to come back through the channel.
 		// TODO: Maximum wait time (this should be solved at a different layer probably, which will take care of retries and everything. But note that we're not getting errors here throught the channel)
 		res := <-resCh
-		log.Println("Recieved response for request id " + res.MessageData.Id)
+		log.Info.Println("Recieved response for request id " + res.MessageData.Id)
 
 		return res.Data, nil
 	}
@@ -213,8 +211,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		schemaRaw, err := json.Marshal(schema)
 		if err != nil {
-			log.Println("Error marshalling schema file: " + err.Error())
-			return err
+			return fmt.Errorf("Error mashalling schema file %w\n", err)
 		}
 		return b.WriteResource(ctx, schemaUrl, schemaRaw)
 	})
@@ -224,8 +221,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	g.Go(func() error {
 		permRaw, err := json.Marshal(permissions)
 		if err != nil {
-			log.Println("Error marshalling permissions file: " + err.Error())
-			return err
+			return fmt.Errorf("Error mashalling permissions file: %w\n", err)
 		}
 		return b.WriteResource(ctx, permUrl, permRaw)
 	})
@@ -236,8 +232,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 		// TODO: Again you're causing problems not having a source of truth for type generation :((((
 		adpRaw, err := json.Marshal(adapter)
 		if err != nil {
-			log.Println("Error marshalling adapter file: " + err.Error())
-			return err
+			return fmt.Errorf("Error marshalling adapter file: %w\n", err)
 		}
 		return b.WriteResource(ctx, adpUrl, adpRaw)
 	})
@@ -249,34 +244,30 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 		var srcs []string
 		err = json.Unmarshal(currSrcs, &srcs)
 		if err != nil {
-			log.Println("Error parsing sources file: " + err.Error())
-			return err
+			return fmt.Errorf("Error parsing sources file: %w\n", err)
 		}
 		srcs = append(srcs, []string{url, adpUrl, permUrl, schemaUrl}...)
 		finalSrcs, err := json.Marshal(srcs)
 		if err != nil {
-			log.Println("Error marshalling sources: " + err.Error())
-			return err
+			return fmt.Errorf("Error marshalling sources: %w\n", err)
 		}
 
 		return adapters.MainAdapter.Write(sourcesUrl, finalSrcs)
 	})
 
 	if err := g.Wait(); err != nil {
-		log.Println("Error writing to one of the files: " + err.Error())
-		return err
+		return fmt.Errorf("Error writing to one of the files: %w\n", err)
 	}
 
 	// Register with the routing table
 	err := HostRouter.RegisterUrl(ctx, url)
 	if err != nil {
-		log.Println("Error regstering URL to Kademlia DHT: " + err.Error())
-		return err
+		return fmt.Errorf("Error regstering URL to Kademlia DHT: %w\n", err)
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
 
-	log.Println("Successfully registered resource at " + url)
+	log.Info.Println("Successfully registered resource at " + url)
 	return nil
 }
 

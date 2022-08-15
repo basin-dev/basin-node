@@ -7,8 +7,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/sestinj/basin-node/util"
 	"github.com/spf13/cobra"
@@ -50,7 +51,7 @@ var genCmd = &cobra.Command{
 			//
 			// TODO: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		default:
-			log.Fatal("Unknown action: ", action)
+			log.Error.Fatal("Unknown action: ", action)
 		}
 	},
 }

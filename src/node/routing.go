@@ -3,7 +3,8 @@ package node
 import (
 	"context"
 	"encoding/json"
-	"log"
+
+	"github.com/sestinj/basin-node/log"
 
 	libp2p_host "github.com/libp2p/go-libp2p-core/host"
 	libp2p_peer "github.com/libp2p/go-libp2p-core/peer"
@@ -71,7 +72,7 @@ func (k KademliaRouter) RegisterUrl(ctx context.Context, url string) error {
 	err = k.dht.PutValue(ctx, DHT_NAMESPACE+url, val)
 
 	if err != nil {
-		log.Printf("Error writing key value pair ('%s', '%s') to Kademlia DHT", DHT_NAMESPACE+url, string(val))
+		log.Warning.Printf("Error writing key value pair ('%s', '%s') to Kademlia DHT", DHT_NAMESPACE+url, string(val))
 	}
 
 	return err

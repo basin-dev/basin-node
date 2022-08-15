@@ -8,7 +8,6 @@ package adapters
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/sestinj/basin-node/client"
@@ -55,13 +54,11 @@ func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
 	url := util.GetMetadataUrl(dataUrl, util.Adapter)
 	bytes, err := LocalAdapter.Read(url)
 	if err != nil {
-		log.Println("Error reading from local LevelDB: " + err.Error())
-		return adapterCfg, err
+		return adapterCfg, fmt.Errorf("Error reading from local LevelDB: %w\n", err)
 	}
 	err = json.Unmarshal(bytes, &adapterCfg)
 	if err != nil {
-		log.Println("Error unmarshaling config: " + err.Error())
-		return adapterCfg, err
+		return adapterCfg, fmt.Errorf("Error unmarshaling config: %w\n", err)
 	}
 
 	return adapterCfg, nil
@@ -70,8 +67,7 @@ func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
 func selectAdapter(url string) (Adapter, error) {
 	cfg, err := getAdapterConfig(url)
 	if err != nil {
-		log.Println("Error getting adapter config: " + err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Error getting adapter config for url %s: %w\n", url, err)
 	}
 	switch cfg.AdapterName {
 	case "local":
@@ -95,8 +91,7 @@ func (m MetaAdapter) Read(url string) ([]byte, error) {
 func (m MetaAdapter) Write(url string, value []byte) error {
 	adapter, err := selectAdapter(url)
 	if err != nil {
-		log.Printf("Error selecting adapter: %s\n", err.Error())
-		return err
+		return fmt.Errorf("Error selecting adapter for url %s: %w\n", url, err)
 	}
 	return adapter.Write(url, value)
 }

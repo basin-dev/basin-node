@@ -34,7 +34,7 @@ func InitLoggers() {
 		Gray = ""
 		White = ""
 	}
-	Info = log.New(os.Stdout, White+"INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(os.Stdout, Cyan+"INFO: ", log.Ldate|log.Ltime)
 	Warning = log.New(os.Stdout, Yellow+"WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(os.Stderr, Red+"ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 }

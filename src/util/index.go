@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
 
 	. "github.com/sestinj/basin-node/structs"
@@ -58,29 +57,6 @@ func MarshalToJson[T any](filepath string) ([]byte, error) {
 	}
 
 	return rawJson, nil
-}
-
-type ErrorHandleAction int64
-
-/*
-Panic is when you want to share stack track trace with the programmer.
-
-log.Fatal is for end user error messages.
-*/
-const (
-	Panic ErrorHandleAction = iota
-	LogFatal
-)
-
-func HandleErr(err error, action ErrorHandleAction) {
-	if err != nil {
-		switch action {
-		case Panic:
-			panic(err)
-		case LogFatal:
-			log.Fatal(err)
-		}
-	}
 }
 
 func ParseUrl(url string) *UrlJson {

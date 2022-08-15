@@ -1,7 +1,7 @@
 package scratch
 
 import (
-	"log"
+	"fmt"
 
 	leveldb "github.com/syndtr/goleveldb/leveldb"
 )
@@ -30,8 +30,7 @@ func (l LocalOnlyDataInterface) Read(key string) ([]byte, error) {
 func (l LocalOnlyDataInterface) Write(key string, val []byte) error {
 	err := l.db.Put([]byte(l.keyPrefix+key), val, nil)
 	if err != nil {
-		log.Println("Error writing to local only db: " + err.Error())
-		return err
+		return fmt.Errorf("Error writing to local only db: %w\n", err)
 	}
 
 	return nil

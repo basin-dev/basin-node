@@ -3,10 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -25,28 +26,29 @@ func RunHttpServer(ctx context.Context, b *BasinNode, addr string) {
 	segs := strings.Split(b.Http, "://")
 	portHost := segs[len(segs)-1]
 	fmt.Fprintf(os.Stdout, "Listening at %s...\n", b.Http)
-	log.Fatal(http.ListenAndServe(portHost, router))
+	log.Error.Fatal(http.ListenAndServe(portHost, router))
 }
 
 func StartEverything(ctx context.Context, config BasinNodeConfig) {
-	// NOTE: The order here matters. For example, db must start before node.
+	// NOTE: The order here matters. For example, db must start before node. Logger must be initialized before any logging
+	log.InitLoggers()
 
 	// Start up the local LevelDB database
-	log.Println("Initializing LevelDB...")
+	log.Info.Println("Initializing LevelDB...")
 	_, err := adapters.StartDB(config.Http)
 	if err != nil {
-		log.Fatal(err)
+		log.Error.Fatal("Failed to initialize LevelDB: " + err.Error())
 	}
 
 	// Start the BasinNode (libp2p host with associated protocol, stream handler)
-	log.Println("Launching Basin Node...")
+	log.Info.Println("Launching Basin Node...")
 	basin, err := StartBasinNode(config)
 	if err != nil {
-		log.Fatal("Failed to instantiate the BasinNode: " + err.Error())
+		log.Error.Fatal("Failed to instantiate the BasinNode: " + err.Error())
 	}
 
 	// Create the Router
-	log.Println("Starting Router...")
+	log.Info.Println("Starting Router...")
 	info := basin.Host.Peerstore().PeerInfo(basin.Host.ID())
 	StartHardcodedRouter(info)
 	// _, err = StartKademliaRouter(ctx, basin.Host)
@@ -55,21 +57,21 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 	// }
 
 	// Setup Discovery
-	log.Println("Setting up mDNS discovery...")
+	log.Info.Println("Setting up mDNS discovery...")
 	err = setupDiscovery(basin.Host)
 	if err != nil {
-		log.Fatal("Failed to start mDNS discovery: ", err.Error())
+		log.Error.Fatal("Failed to start mDNS discovery: ", err.Error())
 	}
 
 	// Create new PubSub
-	log.Println("Creating PubSub...")
+	log.Info.Println("Creating PubSub...")
 	_, err = StartPubSub(ctx, basin.Host)
 	if err != nil {
-		log.Fatal("Failed to instantiate pubsub: " + err.Error())
+		log.Error.Fatal("Failed to instantiate pubsub: " + err.Error())
 	}
 
 	// Start up this node's HTTP API, concurrently with CLI
-	log.Println("Serving HTTP API...")
+	log.Info.Println("Serving HTTP API...")
 	RunHttpServer(ctx, &basin, config.Http)
 }
 

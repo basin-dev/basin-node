@@ -7,7 +7,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -57,13 +56,13 @@ func RunConsole() {
 
 		command, args, err := rootCmd.Find(input)
 		if err != nil {
-			log.Printf("Unknown Command to execute : %s\n", input)
+			fmt.Printf("Unknown Command to execute : %s\n", input)
 			continue
 		}
 
 		err = command.ParseFlags(args)
 		if err != nil {
-			log.Printf("Err parsing flags: %s\n", err.Error())
+			fmt.Printf("Err parsing flags: %s\n", err.Error())
 			continue
 		}
 
