@@ -8,6 +8,7 @@ import Loader from "@lib/Loader.svelte";
     let schema: Promise<any> = Basin.readMetadata(url, "schema");
     let permissions: Promise<any> = Basin.readMetadata(url, "permissions");
     let adapter: Promise<any> = Basin.readMetadata(url, "adapter");
+    let data: Promise<any> = Basin.read(url);
 </script>
 
 <h1>Resource > Twitter Followers</h1>
@@ -37,4 +38,12 @@ import Loader from "@lib/Loader.svelte";
 {:then adapter}
 <h3 class="text-2xl">Adapter</h3> 
     <pre>{JSON.stringify(adapter, null, 2)}</pre>
+{/await}
+
+
+{#await data}
+<Loader></Loader>
+{:then data} 
+<h3 class="text-2xl">Data</h3>
+<pre>{JSON.stringify(data, null, 2)}</pre>
 {/await}

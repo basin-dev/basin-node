@@ -5,5 +5,5 @@ import "../app.css";
 
 <div>
     <TopBar></TopBar>
-    <div class="p-8"><slot></slot></div>
+    <div class="p-8 overflow-x-hidden"><slot></slot></div>
 </div>
