@@ -18,6 +18,7 @@ import (
 	"github.com/sestinj/basin-node/pb"
 	. "github.com/sestinj/basin-node/structs"
 	. "github.com/sestinj/basin-node/util"
+	"github.com/ucan-wg/go-ucan"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -33,6 +34,7 @@ type BasinNode struct {
 	PrivKey      ed25519.PrivateKey
 	Http         string
 	Pubsub       *pubsub.PubSub
+	UcanStore    ucan.TokenStore
 }
 
 const ProtocolReadReq = "/basin/readreq/1.0.0"
@@ -62,7 +64,10 @@ func StartBasinNode(config BasinNodeConfig) (*BasinNode, error) {
 	// Create listener on port
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
-	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http}
+	// Create UCAN store
+	ucanStore := ucan.NewMemTokenStore()
+
+	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http, UcanStore: ucanStore}
 	if err != nil {
 		return &basin, err
 	}

@@ -216,6 +216,14 @@ func (b *BasinNode) subReqHandler(s network.Stream) {
 	// }
 
 	log.Info.Println("Successfully recorded new request")
+
+	// TODO[ucan][3]: In progress: Create and respond with a UCAN
+	// b.UcanStore.PutToken(ctx)
+	// src, err := ucan.NewPrivKeySource(b.PrivKey)
+	// ucan.NewTokenParser(ucan.AttenuationConstructorFunc())
+	// if err != nil {
+	// 	log.Warning.Println("Failed to create new UCAN private key source: ", err.Error())
+	// }
 }
 
 func (b *BasinNode) writeResHandler(s network.Stream) {
