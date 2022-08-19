@@ -35,6 +35,10 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@headlessui/react": "^1.6.6",
+		"@jsonforms/core": "^2.5.2",
+		"@jsonforms/material-renderers": "^2.5.2",
+		"@jsonforms/react": "^2.5.2",
 		"daisyui": "^2.22.0"
 	}
 }
