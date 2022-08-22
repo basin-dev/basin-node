@@ -12,15 +12,12 @@ package server
 
 type SubscribeRequest struct {
 
-	Url string `json:"url"`
-
 	Permissions []PermissionJson `json:"permissions"`
 }
 
 // AssertSubscribeRequestRequired checks if the required fields are not zero-ed
 func AssertSubscribeRequestRequired(obj SubscribeRequest) error {
 	elements := map[string]interface{}{
-		"url": obj.Url,
 		"permissions": obj.Permissions,
 	}
 	for name, el := range elements {

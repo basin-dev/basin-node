@@ -13,7 +13,7 @@ externalDocs:
   description: Find out more about Basin
   url: https://github.com/sestinj/basin-node
 servers:
-- url: http://127.0.0.1:8555/api/v3
+- url: http://127.0.0.1:8555
 paths:
   /write:
     put:
@@ -112,6 +112,29 @@ paths:
         "405":
           description: Validation exception
       summary: Request subscription to Basin resource
+  /notify:
+    post:
+      description: Notify the network of an update to a resource
+      operationId: notify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/notify_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: Successful operation
+        "400":
+          description: Error
+        "404":
+          description: Resource not found
+        "405":
+          description: Validation exception
+      summary: Notify the network of an update to a resource
 components:
   schemas:
     PermissionJson:
@@ -206,13 +229,17 @@ components:
       type: object
     subscribe_request:
       properties:
-        url:
-          type: string
         permissions:
           items:
             $ref: '#/components/schemas/PermissionJson'
           type: array
       required:
       - permissions
+      type: object
+    notify_request:
+      properties:
+        url:
+          type: string
+      required:
       - url
       type: object

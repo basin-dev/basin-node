@@ -7,10 +7,10 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	"github.com/sestinj/basin-node/client"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +34,8 @@ func RunConsole() {
 	\____/\_| |_/\____/ \___/\_| \_/
 	`)
 
+	lastInput := []string{}
+
 	for {
 		input := strings.Split(GetInput(PROMPT, reader), " ")
 
@@ -45,25 +47,32 @@ func RunConsole() {
 		case "quit", "exit":
 			fmt.Println("Exiting session...")
 			return
+		case "up":
+			fmt.Println("Cannot start node from within interactive terminal.")
+		case "retry":
+			input = lastInput
 		}
 
 		// basin register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		// go run . register basin://ty.com.twitter --adapter localhost:/8555 --schema=schema.json --permissions=permissions.json
 		// register basin://tydunn.com.twitter.followers -a ../testing/config/adapter.json -p ../testing/config/permissions.yaml -s ../testing/config/schema.json
+		// do read basin://tydunn.com.twitter.followers
 
 		command, args, err := rootCmd.Find(input)
 		if err != nil {
-			log.Printf("Unknown Command to execute : %s\n", input)
+			fmt.Printf("Unknown Command to execute : %s\n", input)
 			continue
 		}
 
 		err = command.ParseFlags(args)
 		if err != nil {
-			log.Printf("Err parsing flags: %s\n", err.Error())
+			fmt.Printf("Err parsing flags: %s\n", err.Error())
 			continue
 		}
 
 		command.Run(command, args)
+
+		lastInput = input
 	}
 }
 
@@ -78,6 +87,9 @@ var attachCmd = &cobra.Command{
 
 		interactive = true
 		interactiveConfig.Url = httpUrl
+		cfg := client.NewConfiguration()
+		cfg.Servers[0].URL = httpUrl
+		interactiveConfig.ApiClient = client.NewAPIClient(cfg)
 
 		RunConsole()
 

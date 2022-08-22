@@ -5,7 +5,7 @@ package scratch
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"net/http"
 
@@ -21,7 +21,6 @@ var (
 func StartClient(ctx context.Context, h libp2p_host.Host) *http.Client {
 	tr := &http.Transport{}
 
-	// TODO: Take another look at this RegisterProtocol function...looks like it can do some really useful stuff
 	tr.RegisterProtocol("basin", p2phttp.NewTransport(h))
 	client := &http.Client{Transport: tr}
 
@@ -37,7 +36,6 @@ func StartP2pHttp(ctx context.Context, h libp2p_host.Host) error {
 	}
 	defer listener.Close()
 
-	// TODO: Define the rest of the interface between Basin nodes
 	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hi!"))
 	})
@@ -45,5 +43,5 @@ func StartP2pHttp(ctx context.Context, h libp2p_host.Host) error {
 	server := &http.Server{}
 	server.Serve(listener)
 
-	return errors.New("P2P HTTP Server has been closed.")
+	return fmt.Errorf("P2P HTTP Server has been closed.")
 }

@@ -5,9 +5,13 @@
         "properties": {
             "follower": {
                 "type": "object",
-                "propterties": {
-                    "accountId": "string",
-                    "userLink": "string"
+                "properties": {
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "userLink": {
+                        "type" : "string"
+                    }
                 },
                 "required": ["accountId", "userLink"]
             }
