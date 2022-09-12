@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	libp2p "github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sestinj/basin-node/adapters"
@@ -65,7 +66,7 @@ func StartBasinNode(config BasinNodeConfig) (*BasinNode, error) {
 	h, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
 
 	// Create UCAN store
-	ucanStore := ucan.NewMemTokenStore()
+	ucanStore := didutil.StartPersistantTokenStore(config.Pw)
 
 	basin := BasinNode{Host: h, ReadRequests: map[string]*ReadReqAnchor{}, Http: config.Http, UcanStore: ucanStore}
 	if err != nil {
@@ -263,6 +264,22 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	err := HostRouter.RegisterUrl(ctx, url)
 	if err != nil {
 		return fmt.Errorf("Error regstering URL to Kademlia DHT: %w\n", err)
+	}
+
+	// Create the root-level UCAN token, and store it in the local Memstore
+	cryptoPrivKey, err := crypto.UnmarshalEd25519PrivateKey(b.PrivKey)
+	if err != nil {
+		return fmt.Errorf("Error unmarshalling Ed25519 private key in registration: %w\n", err)
+	}
+	rootToken, err := didutil.CreateRootUcanToken(url, cryptoPrivKey, b.Did)
+	if err != nil {
+		return fmt.Errorf("Error creating root UCAN token: %w\n", err)
+	}
+
+	err = didutil.PersistantStore.PutToken(ctx, url, rootToken.Raw)
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("Error saving UCAN token during registration: %w\n", err)
 	}
 
 	// Just like any other update - should tell subscribers (want a function for this)
