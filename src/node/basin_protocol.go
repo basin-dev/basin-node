@@ -261,7 +261,7 @@ func (b *BasinNode) Register(ctx context.Context, url string, adapter client.Ada
 	}
 
 	// Register with the routing table
-	err := HostRouter.RegisterUrl(ctx, url)
+	err := HostRouter.RegisterUrl(context.Background(), url)
 	if err != nil {
 		return fmt.Errorf("Error regstering URL to Kademlia DHT: %w\n", err)
 	}

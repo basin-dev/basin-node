@@ -49,12 +49,10 @@ func StartEverything(ctx context.Context, config BasinNodeConfig) {
 
 	// Create the Router
 	log.Info.Println("Starting Router...")
-	info := basin.Host.Peerstore().PeerInfo(basin.Host.ID())
-	StartHardcodedRouter(info)
-	// _, err = StartKademliaRouter(ctx, basin.Host)
-	// if err != nil {
-	// 	log.Fatal("Failed to instantiate router: ", err.Error())
-	// }
+	_, err = StartKademliaRouter(ctx, basin.Host)
+	if err != nil {
+		log.Error.Fatal("Failed to instantiate router: ", err.Error())
+	}
 
 	// Setup Discovery
 	log.Info.Println("Setting up mDNS discovery...")
@@ -93,7 +91,6 @@ func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
 	if err != nil {
 		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
 	}
-	HostRouter.Peer = pi
 }
 
 func setupDiscovery(h host.Host) error {
