@@ -49,21 +49,21 @@ func AuthLogin() error {
 	return nil
 }
 
-/* Generate and return a new DID, storing its private key in a keyfile, encoded with the given password. */
-func NewPrivateKey(pw string) (string, error) {
+/* Generate and return a new pub/priv key pair, storing its private key in a keyfile, encoded with the given password. */
+func NewPrivateKey(pw string) (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
 
 	did := fmt.Sprintf("did:key:%s", string(pub))
 
 	err = WriteKeystore(did, priv, pw)
 	if err != nil {
-		return did, err
+		return pub, priv, err
 	}
 
-	return did, nil
+	return pub, priv, nil
 }
 
 func DidFilename(did string) string {

@@ -68,9 +68,26 @@ var extractCmd = &cobra.Command{
 	},
 }
 
+var genKeyCmd = &cobra.Command{
+	Use:   "gen",
+	Short: "Generate and store a new key pair",
+	Long:  "Generate and store a new key pair",
+	Run: func(cmd *cobra.Command, args []string) {
+		pw := args[0]
+
+		pub, priv, err := didUtil.NewPrivateKey(pw)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to generate new keypair: %s\n", err.Error())
+		}
+
+		fmt.Fprintf(os.Stdout, "%s %s", string(pub), string(priv))
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(authCmd)
 	authCmd.AddCommand(addCmd)
 	authCmd.AddCommand(forgetCmd)
 	authCmd.AddCommand(extractCmd)
+	authCmd.AddCommand(genKeyCmd)
 }
