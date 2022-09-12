@@ -75,6 +75,15 @@ func (s PersistantTokenStore) ListTokens(ctx context.Context, offset, limit int)
 	return nil, fmt.Errorf("Not Implemented")
 }
 
+func (s PersistantTokenStore) GetParsed(ctx context.Context, url string) (*ucan.Token, error) {
+	raw, err := s.RawToken(ctx, url)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting raw token from store: %w\n", err)
+	}
+
+	return ParseToken([]byte(raw))
+}
+
 var (
 	memStore        ucan.TokenStore
 	PersistantStore PersistantTokenStore
@@ -98,6 +107,28 @@ func CreateRootUcanToken(resourceUrl string, privKey crypto.PrivKey, did string)
 		{Cap: caps.Cap("READ"), Rsc: ucan.NewStringLengthResource("basin", resourceUrl)},
 	}
 	return source.NewOriginToken(did, att, nil, time.Now(), time.Date(9999999999999, 1, 1, 1, 1, 1, 1, time.UTC))
+}
+
+func CreateAttenuatedToken(ctx context.Context, resourceUrl string, privKey crypto.PrivKey, audienceDid string, expiration time.Time, actions []string) (*ucan.Token, error) {
+	source, err := ucan.NewPrivKeySource(privKey)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating new private key source for UCAN: %w\n", err)
+	}
+
+	att := ucan.Attenuations{}
+	// Only READ and WRITE for now
+	for _, action := range actions {
+		if action == "READ" || action == "WRITE" {
+			att = append(att, ucan.Attenuation{Cap: caps.Cap(action), Rsc: ucan.NewStringLengthResource("basin", resourceUrl)})
+		}
+	}
+
+	parentToken, err := PersistantStore.GetParsed(ctx, resourceUrl)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading parent token from UCAN store: %w\n", err)
+	}
+
+	return source.NewAttenuatedToken(parentToken, audienceDid, att, nil, time.Now(), expiration)
 }
 
 func StartPersistantTokenStore(pw string) *PersistantTokenStore {

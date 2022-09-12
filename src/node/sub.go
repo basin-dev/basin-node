@@ -2,9 +2,12 @@ package node
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/sestinj/basin-node/client"
+	didutil "github.com/sestinj/basin-node/did"
 	"github.com/sestinj/basin-node/pb"
 )
 
@@ -50,3 +53,23 @@ func (b *BasinNode) RequestSingleSubscription(ctx context.Context, url string, p
 
 // The subscription request handler should be a plugin—so it can happen manually, or through any automatic process as coded by the producer.
 // It should be able to both answer on the spot and poll the list of requests.
+
+// This function does not handle the permissions requests user metadata file. It is up to another function to search through that and call this one, and also up to that function to delete the entries in the permissions requests file. This function creates a UCAN token, appends the permissions to the permissions file (there's code for this in stuff???), and sends the message to the requester
+func (b *BasinNode) GrantSubscription(ctx context.Context, url string, permissions []client.PermissionJson) error {
+	// Create UCAN token
+	key, err := crypto.UnmarshalEd25519PrivateKey(b.PrivKey)
+	if err != nil {
+		return fmt.Errorf("Error granting subscription: %w\n", err)
+	}
+
+	_, err = didutil.CreateAttenuatedToken(ctx, url, key, permissions[0].Entities[0], *permissions[0].Capabilities[0].Expiration, []string{*permissions[0].Capabilities[0].Action})
+	if err != nil {
+		return fmt.Errorf("Error creating token in grant subscription: %w\n", err)
+	}
+
+	// Join permissions to the metadata file
+
+	// Send the response message to requester
+
+	return nil
+}
