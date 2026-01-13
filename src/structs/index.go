@@ -11,7 +11,7 @@ type UrlJson struct {
 type CapabilityJson struct {
 	Action     string `json:"action"`
 	Expiration string `json:"expiration"`
-	// TODO: Royalties here???
+	// TODO[FEATURE][1]: Royalties here???
 }
 
 type PermissionJson struct {
@@ -20,7 +20,7 @@ type PermissionJson struct {
 	Entities     []string         `json:"entities"`
 }
 
-// TODO: Is this a totally open-ended JSON Schema document?
+// FIXME: Is this a totally open-ended JSON Schema document?
 type SchemaJson struct {
 }
 

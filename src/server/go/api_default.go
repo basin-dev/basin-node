@@ -50,30 +50,60 @@ func NewDefaultApiController(s DefaultApiServicer, opts ...DefaultApiOption) Rou
 func (c *DefaultApiController) Routes() Routes {
 	return Routes{
 		{
+			"Notify",
+			strings.ToUpper("Post"),
+			"/notify",
+			c.Notify,
+		},
+		{
 			"Read",
 			strings.ToUpper("Get"),
-			"/api/v3/read",
+			"/read",
 			c.Read,
 		},
 		{
 			"Register",
 			strings.ToUpper("Post"),
-			"/api/v3/register",
+			"/register",
 			c.Register,
 		},
 		{
 			"Subscribe",
 			strings.ToUpper("Post"),
-			"/api/v3/subscribe",
+			"/subscribe",
 			c.Subscribe,
 		},
 		{
 			"Write",
 			strings.ToUpper("Put"),
-			"/api/v3/write",
+			"/write",
 			c.Write,
 		},
 	}
+}
+
+// Notify - Notify the network of an update to a resource
+func (c *DefaultApiController) Notify(w http.ResponseWriter, r *http.Request) {
+	notifyRequestParam := NotifyRequest{}
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&notifyRequestParam); err != nil {
+		c.errorHandler(w, r, &ParsingError{Err: err}, nil)
+		return
+	}
+	if err := AssertNotifyRequestRequired(notifyRequestParam); err != nil {
+		c.errorHandler(w, r, err, nil)
+		return
+	}
+	result, err := c.service.Notify(r.Context(), notifyRequestParam)
+	// If an error occurred, encode the error with the status code
+	if err != nil {
+		c.errorHandler(w, r, err, &result)
+		return
+	}
+	// If no error, encode the body and the result code
+	EncodeJSONResponse(result.Body, &result.Code, w)
+
 }
 
 // Read - Read Basin resource

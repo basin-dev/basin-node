@@ -19,7 +19,7 @@ func (w WebResolver) Resolve(did string) ([]byte, error) {
 	}
 
 	path := strings.ReplaceAll(parsed.ID, ":", "/")
-	// TODO: "If the domain contains a port percent decode the colon."
+	// "If the domain contains a port percent decode the colon."
 
 	url := "https://" + path
 

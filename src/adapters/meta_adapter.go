@@ -7,11 +7,10 @@ package adapters
 
 import (
 	"encoding/json"
-	"errors"
-	"log"
+	"fmt"
 	"strings"
 
-	. "github.com/sestinj/basin-node/structs"
+	"github.com/sestinj/basin-node/client"
 	"github.com/sestinj/basin-node/util"
 )
 
@@ -25,12 +24,12 @@ type RawAdapterConfig struct {
 	Config      []byte
 }
 
-var LOCAL_ADAPTER_CONFIG = RawAdapterConfig{AdapterName: "local"}
+var LOCAL_ADAPTER_CONFIG = client.AdapterJson{AdapterName: "local"}
 
 type MetaAdapter struct{}
 
-func getAdapterConfig(dataUrl string) (RawAdapterConfig, error) {
-	var raw RawAdapterConfig
+func getAdapterConfig(dataUrl string) (client.AdapterJson, error) {
+	var adapterCfg client.AdapterJson
 	// NOTE: This becomes a problem once you start trying to work with metadata: if you want to write to meta.adapter.... you first need to read meta.adapter.meta.adapter... and so on, an infinite loop.
 	// So there has to be a baseline default for metadata adapters, which makes sense.
 	parsed := util.ParseUrl(dataUrl)
@@ -41,47 +40,32 @@ func getAdapterConfig(dataUrl string) (RawAdapterConfig, error) {
 	} else if strings.HasPrefix(parsed.Domain, "meta."+util.Permissions.String()) {
 		return LOCAL_ADAPTER_CONFIG, nil
 	} else if strings.HasPrefix(parsed.Domain, "meta.") {
-		log.Printf("Unknown meta prefix in URL '%s'", parsed.Domain)
-		return raw, errors.New("Unknown meta prefix")
+		return adapterCfg, fmt.Errorf("Unknown meta prefix in URL '%s'", parsed.Domain)
 	}
 
-	// TODO: For now, bottoming out with user data (basin.producer....) files, but want to probably register them in the same way instead. See below
 	if strings.HasPrefix(parsed.Domain, "basin") {
 		return LOCAL_ADAPTER_CONFIG, nil
 	}
 
-	// TODO: TODO: TODO: When a file is written, should it's adapter info always be written (unless it's an adapter file?? This is getting ugly fast...)
-	// TODO: Question you need to answer rn is whether there should exist a meta.adapter.basin.producer.sources file from the start, or if you should assume that basin.producer.sources is automatically local. What files should be local? Wouldn't we want to register this like anything else?
+	// TODO[ARCH][2]: Create adapter files for permissions, schema, and sources (not adapter) when you create them in Register() and StartBasinNode() respectively.
 
 	url := util.GetMetadataUrl(dataUrl, util.Adapter)
-	cfg := new(AdapterConfig)
 	bytes, err := LocalAdapter.Read(url)
 	if err != nil {
-		log.Println("Error reading from local LevelDB: " + err.Error())
-		return raw, err
+		return adapterCfg, fmt.Errorf("Error reading from local LevelDB: %w\n", err)
 	}
-	err = json.Unmarshal(bytes, cfg)
+	err = json.Unmarshal(bytes, &adapterCfg)
 	if err != nil {
-		log.Println("Error unmarshaling config: " + err.Error())
-		return raw, err
+		return adapterCfg, fmt.Errorf("Error unmarshaling config: %w\n", err)
 	}
 
-	cfgData, err := json.Marshal(cfg.Config)
-	if err != nil {
-		log.Println("Error marshaling config: " + err.Error())
-		return raw, err
-	}
-	raw.AdapterName = cfg.AdapterName
-	raw.Config = cfgData
-
-	return raw, nil
+	return adapterCfg, nil
 }
 
 func selectAdapter(url string) (Adapter, error) {
 	cfg, err := getAdapterConfig(url)
 	if err != nil {
-		log.Println("Error getting adapter config: " + err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Error getting adapter config for url %s: %w\n", url, err)
 	}
 	switch cfg.AdapterName {
 	case "local":
@@ -89,8 +73,8 @@ func selectAdapter(url string) (Adapter, error) {
 	case "http":
 		return httpAdapter, nil
 	default:
-		// TODO: Adapter plugins
-		return nil, errors.New("Unknown adapter")
+		// TODO[FEATURE][1]: Adapter plugins
+		return nil, fmt.Errorf("Unknown adapter name '%s'", cfg.AdapterName)
 	}
 }
 
@@ -105,8 +89,7 @@ func (m MetaAdapter) Read(url string) ([]byte, error) {
 func (m MetaAdapter) Write(url string, value []byte) error {
 	adapter, err := selectAdapter(url)
 	if err != nil {
-		log.Printf("Error selecting adapter: %s\n", err.Error())
-		return err
+		return fmt.Errorf("Error selecting adapter for url %s: %w\n", url, err)
 	}
 	return adapter.Write(url, value)
 }

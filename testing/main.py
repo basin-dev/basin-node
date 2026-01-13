@@ -11,6 +11,10 @@ async def help():
 async def read_followers():
     return FileResponse('data/followers.json')
 
+@app.get("/followers2")
+async def read_followers2():
+    return FileResponse('data/followers.json')
+
 @app.get("/following")
 async def read_following():
     return FileResponse('data/following.json')

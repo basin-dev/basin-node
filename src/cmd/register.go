@@ -53,6 +53,8 @@ var registerCmd = &cobra.Command{
 		} else if r.StatusCode != 200 {
 			fmt.Fprintf(os.Stderr, "Response returned error: %s", r.Status)
 		}
+
+		fmt.Fprintf(os.Stdout, "Successfully registered resource at %s\n", url)
 	},
 }
 

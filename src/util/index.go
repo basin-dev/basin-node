@@ -2,9 +2,8 @@ package util
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
 
 	. "github.com/sestinj/basin-node/structs"
@@ -35,7 +34,7 @@ func UnmarshalFromFile[T any](filepath string) (*T, error) {
 	case "yml":
 		err = yaml.Unmarshal(raw, &t)
 	default:
-		return nil, errors.New("Cannot parse filetype: " + segs[len(segs)-1])
+		return nil, fmt.Errorf("Cannot parse filetype '%s'", segs[len(segs)-1])
 	}
 	if err != nil {
 		return nil, err
@@ -58,29 +57,6 @@ func MarshalToJson[T any](filepath string) ([]byte, error) {
 	}
 
 	return rawJson, nil
-}
-
-type ErrorHandleAction int64
-
-/*
-Panic is when you want to share stack track trace with the programmer.
-
-log.Fatal is for end user error messages.
-*/
-const (
-	Panic ErrorHandleAction = iota
-	LogFatal
-)
-
-func HandleErr(err error, action ErrorHandleAction) {
-	if err != nil {
-		switch action {
-		case Panic:
-			panic(err)
-		case LogFatal:
-			log.Fatal(err)
-		}
-	}
 }
 
 func ParseUrl(url string) *UrlJson {

@@ -9,6 +9,7 @@ docs/AdapterJson.md
 docs/AdapterSchema.md
 docs/CapabilitySchema.md
 docs/DefaultApi.md
+docs/NotifyRequest.md
 docs/PermissionJson.md
 docs/PermissionSchema.md
 docs/RegisterRequest.md
@@ -20,6 +21,7 @@ go.sum
 model_adapter_json.go
 model_adapter_schema.go
 model_capability_schema.go
+model_notify_request.go
 model_permission_json.go
 model_permission_schema.go
 model_register_request.go

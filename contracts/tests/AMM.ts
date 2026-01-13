@@ -10,8 +10,6 @@ import LToken from "../artifacts/src/dex/LToken.sol/LToken.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { createContracts, waitForTx, decode, isAddress } from "./libs";
 
-// TODO Instead of having an array of Contracts, one for each signer, you should make a function to do this, and memoize the Contracts
-
 const initialBalance = BigNumber.from(100000000000000);
 
 describe("*", () => {
@@ -213,11 +211,6 @@ describe("*", () => {
       );
       console.log(`x: ${x}, y: ${y}, k: ${k}, f1: ${f1}, f2: ${f2}`);
 
-      //TODO - It seems that due to error rounding, it is only possible to get one of the below assertions correct each time.
-      // Right now choosing to assert the second. See ADEX.sol.
-      //   assert(k === x * y, `k = ${k} doesn't match with x * y = ${x * y}`);
-      // Considering even just giving prices, you HAVE to be able to represent floats in Solidity. Look at how Uni does it.
-      // Anywhere you see Math.round in this file should be gone.
       assert(k.eq(k_0), `k has changed. (from ${k_0} to ${k})`);
 
       assert(
@@ -276,7 +269,7 @@ describe("*", () => {
       p_0 = p;
     });
     it("should remove liquidity", async () => {
-      // TODO
+      //
     });
     it("should successfully execute the following series of swaps.", async () => {
       // Later priority for serious testing.

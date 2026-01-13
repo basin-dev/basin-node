@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sestinj/basin-node/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +33,8 @@ var interactive = false
 
 // Configuration that gives interactive commands the necessary context
 type InteractiveConfig struct {
-	Url string
+	Url       string
+	ApiClient *client.APIClient
 }
 
 var interactiveConfig InteractiveConfig

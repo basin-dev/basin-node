@@ -42,7 +42,7 @@ func (c *Controller) MarshalJSON() ([]byte, error) {
 	}
 }
 
-// TODO: See https://www.w3.org/TR/did-core/#dfn-publickeyjwk, https://www.rfc-editor.org/rfc/rfc7517
+// TODO[LIBRARY][1]: See https://www.w3.org/TR/did-core/#dfn-publickeyjwk, https://www.rfc-editor.org/rfc/rfc7517
 type Jwk interface{}
 
 type VerificationMethod struct {
@@ -55,7 +55,7 @@ type VerificationMethod struct {
 
 // https://www.w3.org/TR/did-core/#did-document-properties
 type DidDocument struct {
-	Id                   string               `json:"id"` // TODO: Is there a way to automatically parse this with a custom unmarshaler? Can't add method to non-local struct, but maybe wrapper
+	Id                   string               `json:"id"` // Is there a way to automatically parse this with a custom unmarshaler? Can't add method to non-local struct, but maybe wrapper
 	Context              []url.URL            `json:"@context"`
 	AlsoKnownAs          []string             `json:"alsoKnownAs,omitempty"`
 	Controller           Controller           `json:"controller,omitempty"`

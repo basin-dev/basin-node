@@ -6,14 +6,25 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/sestinj/basin-node/log"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sestinj/basin-node/client"
 )
+
+func PrettyStruct(data interface{}) (string, error) {
+	val, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		return "", err
+	}
+	return string(val), nil
+}
 
 // doCmd represents the do command
 // basin do read <URL>
@@ -31,27 +42,34 @@ var doCmd = &cobra.Command{
 		action := args[0]
 		url := args[1]
 
-		cfg := client.NewConfiguration()
-		apiClient := client.NewAPIClient(cfg)
 		ctx := context.Background()
 
 		switch action {
 		case "read":
-			resp, r, err := apiClient.DefaultApi.Read(ctx).Url(url).Execute()
+			resp, r, err := interactiveConfig.ApiClient.DefaultApi.Read(ctx).Url(url).Execute()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
+				fmt.Fprintf(os.Stderr, "Failed to read resource: %s\n", err.Error())
+				return
 			} else if r.StatusCode != 200 {
-				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", r.Status)
+				fmt.Fprintf(os.Stderr, "Failed to read resource: %s\n", r.Status)
+				return
 			}
 			fmt.Fprintln(os.Stdout, resp)
-			// TODO: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
+
+			resp = resp[1 : len(resp)-1] // Have to unquote the string...
+			data, err := base64.StdEncoding.DecodeString(resp)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Couldn't hex.decodestring :(: %s\n", err.Error())
+			}
+			fmt.Println(string(data))
+			// FIXME[base64][2]: Should be able to request either raw binary or json. Can this just happen through MIME types?? This should also depend on the schema/data type. Not everything will be JSON.
 		case "write":
 			if len(args) < 3 {
-				log.Fatal("Not enough arguments supplied to write command.")
+				log.Error.Fatal("Not enough arguments supplied to write command.")
 			}
 			value := args[2]
 			writeReq := client.NewWriteRequest(url, value)
-			resp, r, err := apiClient.DefaultApi.Write(ctx).WriteRequest(*writeReq).Execute()
+			resp, r, err := interactiveConfig.ApiClient.DefaultApi.Write(ctx).WriteRequest(*writeReq).Execute()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to read resource: %s", err.Error())
 			} else if r.StatusCode != 200 {
@@ -59,7 +77,7 @@ var doCmd = &cobra.Command{
 			}
 			fmt.Fprintln(os.Stdout, resp)
 		default:
-			log.Fatal("Arbitrary actions are not yet supported")
+			log.Error.Fatal("Arbitrary actions are not yet supported")
 		}
 	},
 }

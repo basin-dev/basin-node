@@ -17,7 +17,7 @@ var upCmd = &cobra.Command{
 	Long:  `Start a Basin node`,
 	Run: func(cmd *cobra.Command, args []string) {
 		httpUrl, err := cmd.Flags().GetString("http")
-		if err != nil { // TODO: @TyDunn, does the value argument to the flag creation functions below set the default value? Why would an error occur?
+		if err != nil {
 			httpUrl = ""
 		}
 
